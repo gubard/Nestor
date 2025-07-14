@@ -301,6 +301,53 @@ public class EventEntryGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("    context.AddRange(events);");
         stringBuilder.AppendLine("    }");
     }
+    
+    private void CreateAddEntityA(
+        string idName,
+        ClassDeclarationSyntax @class,
+        Span<PropertyDeclarationSyntax> properties,
+        Compilation compilation,
+        StringBuilder stringBuilder
+    )
+    {
+        stringBuilder.AppendLine(
+            $"    public static async void Add{@class.GetName()}sAsync(global::{TypeFullNames.DbContext} context, string userId, global::{TypeFullNames.CancellationToken} cancellationToken, params global::{@class.GetFullName()}[] items)");
+
+        stringBuilder.AppendLine("    {");
+
+        stringBuilder.AppendLine(
+            $"        var events = new global::{TypeFullNames.List}<global::{TypeFullNames.EventEntity}>();");
+
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine("        foreach (var item in items)");
+        stringBuilder.AppendLine("        {");
+
+        foreach (var property in properties)
+        {
+            if (idName == property.GetName())
+            {
+                continue;
+            }
+
+            stringBuilder.AppendLine($"            events.Add(new global::{TypeFullNames.EventEntity}");
+            stringBuilder.AppendLine("            {");
+            stringBuilder.AppendLine($"                EntityId = item.{idName},");
+            stringBuilder.AppendLine($"                EntityType = nameof(global::{@class.GetFullName()}),");
+            stringBuilder.AppendLine($"                EntityProperty = nameof({property.GetName()}),");
+
+            stringBuilder.AppendLine(
+                $"                {GetEntityValueName(property, compilation)} = ({GetEntityTypeName(property.Type, compilation)})item.{property.GetName()},");
+
+            stringBuilder.AppendLine("                UserId = userId,");
+            stringBuilder.AppendLine("            });");
+            stringBuilder.AppendLine();
+        }
+
+        stringBuilder.AppendLine("        }");
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine("    await context.AddRangeAsync(events, cancellationToken);");
+        stringBuilder.AppendLine("    }");
+    }
 
     private string GetEntityValueName(PropertyDeclarationSyntax property, Compilation compilation)
     {
@@ -401,6 +448,8 @@ public class EventEntryGenerator : IIncrementalGenerator
                     stringBuilder.AppendLine($"partial class {source.GetName()}");
                     stringBuilder.AppendLine("{");
                     CreateAddEntity(idName, source, properties, compilation, stringBuilder);
+                    stringBuilder.AppendLine();
+                    CreateAddEntityA(idName, source, properties, compilation, stringBuilder);
                     stringBuilder.AppendLine();
                     CreateFindEntity(idName, source, properties, compilation, stringBuilder);
                     stringBuilder.AppendLine();
