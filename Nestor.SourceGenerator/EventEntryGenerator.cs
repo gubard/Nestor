@@ -298,7 +298,7 @@ public class EventEntryGenerator : IIncrementalGenerator
 
         stringBuilder.AppendLine("        }");
         stringBuilder.AppendLine();
-        stringBuilder.AppendLine("    context.AddRange(events);");
+        stringBuilder.AppendLine("        context.AddRange(events);");
         stringBuilder.AppendLine("    }");
     }
     
@@ -367,20 +367,25 @@ public class EventEntryGenerator : IIncrementalGenerator
             var symbolInfo = semanticModel.GetSymbolInfo(identifier);
             var symbol = symbolInfo.Symbol;
 
-            if (symbol is INamedTypeSymbol { TypeKind: TypeKind.Enum } named)
+            if (symbol is INamedTypeSymbol { TypeKind: TypeKind.Enum, } named)
             {
-                return GetEntityValueName(named.EnumUnderlyingType);   
+                return GetEntityValueName(named.EnumUnderlyingType);
             }
+        }
+
+        if (type is NullableTypeSyntax nullable)
+        {
+            return GetEntityValueName(nullable.ElementType, compilation);
         }
 
         return $"Entity{type.GetRealName()}Value";
     }
-    
+
     private string GetEntityValueName(INamedTypeSymbol named)
     {
         return $"Entity{named.Name}Value";
     }
-    
+
     private string GetEntityTypeName(TypeSyntax type, Compilation compilation)
     {
         if (type is IdentifierNameSyntax identifier)
@@ -389,15 +394,15 @@ public class EventEntryGenerator : IIncrementalGenerator
             var symbolInfo = semanticModel.GetSymbolInfo(identifier);
             var symbol = symbolInfo.Symbol;
 
-            if (symbol is INamedTypeSymbol { TypeKind: TypeKind.Enum } named)
+            if (symbol is INamedTypeSymbol { TypeKind: TypeKind.Enum, } named)
             {
-                return GetEntityTypeName(named.EnumUnderlyingType);   
+                return GetEntityTypeName(named.EnumUnderlyingType);
             }
         }
 
         return type.ToString();
     }
-    
+
     private string GetEntityTypeName(INamedTypeSymbol named)
     {
         return named.Name;
@@ -467,7 +472,7 @@ public class EventEntryGenerator : IIncrementalGenerator
                     spc.AddSource($"EventEntity.{source.GetName()}.g.cs", SourceText.From(text, Encoding.UTF8));
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 spc.AddSource("EventEntity.g.cs", SourceText.From(e.ToString(), Encoding.UTF8));
             }
