@@ -1,7 +1,6 @@
 ﻿using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Text;
 
 namespace Nestor.SourceGenerator;
 
@@ -682,12 +681,12 @@ public class EventEntryGenerator : IIncrementalGenerator
                     stringBuilder.AppendLine();
                     CreateEditClass(idName, source, properties, stringBuilder);
                     var text = stringBuilder.ToString();
-                    spc.AddSource($"EventEntity.{source.GetName()}.g.cs", SourceText.From(text, Encoding.UTF8));
+                    spc.AddSource($"EventEntity.{source.GetName()}.g.cs", text);
                 }
             }
             catch (Exception e)
             {
-                spc.AddSource("EventEntity.g.cs", SourceText.From(e.ToString(), Encoding.UTF8));
+                spc.AddSource("EventEntity.g.cs", e.ToString());
             }
         });
     }
