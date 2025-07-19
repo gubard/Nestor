@@ -15,7 +15,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("    {");
 
         stringBuilder.AppendLine(
-            $"        var isDeleted = events.FirstOrDefault(x => x.EntityId == id && x.EntityType == nameof(global::{@class.GetNamespace()}) && x.EntityProperty == \"__IS_DELETED__\");");
+            $"        var isDeleted = events.FirstOrDefault(x => x.EntityId == id && x.EntityType == nameof(global::{@class.GetFullName()}) && x.EntityProperty == \"__IS_DELETED__\");");
 
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("        if(isDeleted is not null)");
@@ -25,7 +25,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         stringBuilder.AppendLine();
 
         stringBuilder.AppendLine(
-            $"        return events.Any(x => x.EntityId == id && x.EntityType == nameof(global::{@class.GetNamespace()}));");
+            $"        return events.Any(x => x.EntityId == id && x.EntityType == nameof(global::{@class.GetFullName()}));");
 
         stringBuilder.AppendLine("    }");
     }
@@ -38,7 +38,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("    {");
 
         stringBuilder.AppendLine(
-            $"        var isDeleted = await events.FirstOrDefaultAsync(x => x.EntityId == id && x.EntityType == nameof(global::{@class.GetNamespace()}) && x.EntityProperty == \"__IS_DELETED__\", cancellationToken);");
+            $"        var isDeleted = await events.FirstOrDefaultAsync(x => x.EntityId == id && x.EntityType == nameof(global::{@class.GetFullName()}) && x.EntityProperty == \"__IS_DELETED__\", cancellationToken);");
 
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("        if(isDeleted is not null)");
@@ -48,7 +48,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         stringBuilder.AppendLine();
 
         stringBuilder.AppendLine(
-            $"        return await events.AnyAsync(x => x.EntityId == id && x.EntityType == nameof(global::{@class.GetNamespace()}), cancellationToken);");
+            $"        return await events.AnyAsync(x => x.EntityId == id && x.EntityType == nameof(global::{@class.GetFullName()}), cancellationToken);");
 
         stringBuilder.AppendLine("    }");
     }
@@ -61,7 +61,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("    {");
 
         stringBuilder.AppendLine(
-            $"        context.AddRange(ids.Select(x => new global::Nestor.Db.EventEntity {{  EntityId = x, EntityType = nameof(global::{@class.GetNamespace()}), EntityProperty = \"__IS_DELETED__\", EntityBooleanValue = true }}));");
+            $"        context.AddRange(ids.Select(x => new global::Nestor.Db.EventEntity {{  EntityId = x, EntityType = nameof(global::{@class.GetFullName()}), EntityProperty = \"__IS_DELETED__\", EntityBooleanValue = true }}));");
 
         stringBuilder.AppendLine("    }");
     }
@@ -74,7 +74,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("    {");
 
         stringBuilder.AppendLine(
-            $"        await context.AddRangeAsync(ids.Select(x => new global::{TypeFullNames.EventEntity} {{  EntityId = x, EntityType = nameof(global::{@class.GetNamespace()}), EntityProperty = \"__IS_DELETED__\", EntityBooleanValue = true }}), cancellationToken);");
+            $"        await context.AddRangeAsync(ids.Select(x => new global::{TypeFullNames.EventEntity} {{  EntityId = x, EntityType = nameof(global::{@class.GetFullName()}), EntityProperty = \"__IS_DELETED__\", EntityBooleanValue = true }}), cancellationToken);");
 
         stringBuilder.AppendLine("    }");
     }
@@ -102,14 +102,14 @@ public class EventEntryGenerator : IIncrementalGenerator
             }
 
             var max =
-                $"events.GroupBy(x => x.EntityId).Select(y => y.Where(x => x.EntityId == y.Key && x.EntityProperty == nameof({property.GetName()}) && x.EntityType == nameof(global::{@class.GetNamespace()})).Max(x => x.Id))";
+                $"events.GroupBy(x => x.EntityId).Select(y => y.Where(x => x.EntityId == y.Key && x.EntityProperty == nameof({property.GetName()}) && x.EntityType == nameof(global::{@class.GetFullName()})).Max(x => x.Id))";
 
             groupBys[index] = max;
             index++;
         }
 
         groupBys[groupBys.Length - 1] =
-            $"events.GroupBy(x => x.EntityId).Select(y => y.Where(x => x.EntityId == y.Key && x.EntityProperty == \"__IS_DELETED__\" && x.EntityType == nameof(global::{@class.GetNamespace()})).Max(x => x.Id))";
+            $"events.GroupBy(x => x.EntityId).Select(y => y.Where(x => x.EntityId == y.Key && x.EntityProperty == \"__IS_DELETED__\" && x.EntityType == nameof(global::{@class.GetFullName()})).Max(x => x.Id))";
 
         stringBuilder.AppendLine($"        var query = events.Where(y => {Concat(groupBys)}.Contains(y.Id));");
 
@@ -162,14 +162,14 @@ public class EventEntryGenerator : IIncrementalGenerator
             }
 
             var max =
-                $"events.GroupBy(x => x.EntityId).Select(y => y.Where(x => x.EntityId == y.Key && x.EntityProperty == nameof({property.GetName()}) && x.EntityType == nameof(global::{@class.GetNamespace()})).Max(x => x.Id))";
+                $"events.GroupBy(x => x.EntityId).Select(y => y.Where(x => x.EntityId == y.Key && x.EntityProperty == nameof({property.GetName()}) && x.EntityType == nameof(global::{@class.GetFullName()})).Max(x => x.Id))";
 
             groupBys[index] = max;
             index++;
         }
 
         groupBys[groupBys.Length - 1] =
-            $"events.GroupBy(x => x.EntityId).Select(y => y.Where(x => x.EntityId == y.Key && x.EntityProperty == \"__IS_DELETED__\" && x.EntityType == nameof(global::{@class.GetNamespace()})).Max(x => x.Id))";
+            $"events.GroupBy(x => x.EntityId).Select(y => y.Where(x => x.EntityId == y.Key && x.EntityProperty == \"__IS_DELETED__\" && x.EntityType == nameof(global::{@class.GetFullName()})).Max(x => x.Id))";
 
         stringBuilder.AppendLine($"        var query = events.Where(y => {Concat(groupBys)}.Contains(y.Id));");
 
@@ -225,7 +225,7 @@ public class EventEntryGenerator : IIncrementalGenerator
             stringBuilder.AppendLine("            {");
 
             stringBuilder.AppendLine(
-                $"                context.Add(new global::Nestor.Db.EventEntity {{ EntityId = item.{idName}, EntityType = nameof({@class.GetNamespace()}), EntityProperty = nameof({property.GetName()}), {GetEntityValueName(property, compilation)} = ({GetEntityTypeName(property.Type, compilation)})item.{property.GetName()}, UserId = userId}});");
+                $"                context.Add(new global::Nestor.Db.EventEntity {{ EntityId = item.{idName}, EntityType = nameof(global::{@class.GetFullName()}), EntityProperty = nameof({property.GetName()}), {GetEntityValueName(property, compilation)} = ({GetEntityTypeName(property.Type, compilation)})item.{property.GetName()}, UserId = userId}});");
 
             stringBuilder.AppendLine("            }");
             stringBuilder.AppendLine();
@@ -261,7 +261,7 @@ public class EventEntryGenerator : IIncrementalGenerator
             stringBuilder.AppendLine("            {");
 
             stringBuilder.AppendLine(
-                $"                await context.AddAsync(new global::{TypeFullNames.EventEntity} {{ EntityId = item.{idName}, EntityType = nameof({@class.GetNamespace()}), EntityProperty = nameof({property.GetName()}), {GetEntityValueName(property, compilation)} = ({GetEntityTypeName(property.Type, compilation)})item.{property.GetName()}, UserId = userId}}, cancellationToken);");
+                $"                await context.AddAsync(new global::{TypeFullNames.EventEntity} {{ EntityId = item.{idName}, EntityType = nameof(global::{@class.GetFullName()}), EntityProperty = nameof({property.GetName()}), {GetEntityValueName(property, compilation)} = ({GetEntityTypeName(property.Type, compilation)})item.{property.GetName()}, UserId = userId}}, cancellationToken);");
 
             stringBuilder.AppendLine("            }");
             stringBuilder.AppendLine();
@@ -294,14 +294,14 @@ public class EventEntryGenerator : IIncrementalGenerator
             }
 
             var max =
-                $"events.Where(x => x.EntityId == id && x.EntityProperty == nameof({property.GetName()}) && x.EntityType == nameof(global::{@class.GetNamespace()})).Max(x => x.Id)";
+                $"events.Where(x => x.EntityId == id && x.EntityProperty == nameof({property.GetName()}) && x.EntityType == nameof(global::{@class.GetFullName()})).Max(x => x.Id)";
 
             groupBys[index] = max;
             index++;
         }
 
         groupBys[groupBys.Length - 1] =
-            $"events.Where(x => x.EntityId == id && x.EntityProperty == \"__IS_DELETED__\" && x.EntityType == nameof(global::{@class.GetNamespace()})).Max(x => x.Id)";
+            $"events.Where(x => x.EntityId == id && x.EntityProperty == \"__IS_DELETED__\" && x.EntityType == nameof(global::{@class.GetFullName()})).Max(x => x.Id)";
 
         stringBuilder.AppendLine(
             $"        var query = events.Where(y => y.Id == {string.Join(" || y.Id == ", groupBys.ToArray())});");
@@ -364,14 +364,14 @@ public class EventEntryGenerator : IIncrementalGenerator
             }
 
             var max =
-                $"events.Where(x => x.EntityId == id && x.EntityProperty == nameof({property.GetName()}) && x.EntityType == nameof(global::{@class.GetNamespace()})).Max(x => x.Id)";
+                $"events.Where(x => x.EntityId == id && x.EntityProperty == nameof({property.GetName()}) && x.EntityType == nameof(global::{@class.GetFullName()})).Max(x => x.Id)";
 
             groupBys[index] = max;
             index++;
         }
 
         groupBys[groupBys.Length - 1] =
-            $"events.Where(x => x.EntityId == id && x.EntityProperty == \"__IS_DELETED__\" && x.EntityType == nameof(global::{@class.GetNamespace()})).Max(x => x.Id)";
+            $"events.Where(x => x.EntityId == id && x.EntityProperty == \"__IS_DELETED__\" && x.EntityType == nameof(global::{@class.GetFullName()})).Max(x => x.Id)";
 
         stringBuilder.AppendLine(
             $"        var query = events.Where(y => y.Id == {string.Join(" || y.Id == ", groupBys.ToArray())});");
