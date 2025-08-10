@@ -56,12 +56,12 @@ public class EventEntryGenerator : IIncrementalGenerator
     private void CreateDelete(ClassDeclarationSyntax @class, StringBuilder stringBuilder)
     {
         stringBuilder.AppendLine(
-            $"    public static void Delete{@class.GetName()}s(global::Microsoft.EntityFrameworkCore.DbContext context, params global::System.Guid[] ids)");
+            $"    public static void Delete{@class.GetName()}s(global::Microsoft.EntityFrameworkCore.DbContext context, string userId, params global::System.Guid[] ids)");
 
         stringBuilder.AppendLine("    {");
 
         stringBuilder.AppendLine(
-            $"        context.AddRange(ids.Select(x => new global::Nestor.Db.EventEntity {{  EntityId = x, EntityType = nameof(global::{@class.GetFullName()}), EntityProperty = \"__IS_DELETED__\", EntityBooleanValue = true }}));");
+            $"        context.AddRange(ids.Select(x => new global::Nestor.Db.EventEntity {{ UserId = userId, EntityId = x, EntityType = nameof(global::{@class.GetFullName()}), EntityProperty = \"__IS_DELETED__\", EntityBooleanValue = true }}));");
 
         stringBuilder.AppendLine("    }");
     }
@@ -69,12 +69,12 @@ public class EventEntryGenerator : IIncrementalGenerator
     private void CreateDeleteA(ClassDeclarationSyntax @class, StringBuilder stringBuilder)
     {
         stringBuilder.AppendLine(
-            $"    public static async global::{TypeFullNames.ValueTask} Delete{@class.GetName()}sAsync(global::{TypeFullNames.DbContext} context, global::{TypeFullNames.CancellationToken} cancellationToken, params global::{TypeFullNames.Guid}[] ids)");
+            $"    public static async global::{TypeFullNames.ValueTask} Delete{@class.GetName()}sAsync(global::{TypeFullNames.DbContext} context, string userId, global::{TypeFullNames.CancellationToken} cancellationToken, params global::{TypeFullNames.Guid}[] ids)");
 
         stringBuilder.AppendLine("    {");
 
         stringBuilder.AppendLine(
-            $"        await context.AddRangeAsync(ids.Select(x => new global::{TypeFullNames.EventEntity} {{  EntityId = x, EntityType = nameof(global::{@class.GetFullName()}), EntityProperty = \"__IS_DELETED__\", EntityBooleanValue = true }}), cancellationToken);");
+            $"        await context.AddRangeAsync(ids.Select(x => new global::{TypeFullNames.EventEntity} {{ UserId = userId,  EntityId = x, EntityType = nameof(global::{@class.GetFullName()}), EntityProperty = \"__IS_DELETED__\", EntityBooleanValue = true }}), cancellationToken);");
 
         stringBuilder.AppendLine("    }");
     }
