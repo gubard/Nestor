@@ -244,7 +244,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static async global::{TypeFullNames.ValueTask} Edit{@class.GetName()}s(global::{TypeFullNames.DbContext} context, string userId, global::{TypeFullNames.IEnumerable}<global::{@class.GetNamespace()}.Edit{@class.GetName()}> items, global::{TypeFullNames.CancellationToken} cancellationToken)");
+            $"    public static async global::{TypeFullNames.ValueTask} Edit{@class.GetName()}sAsync(global::{TypeFullNames.DbContext} context, string userId, global::{TypeFullNames.IEnumerable}<global::{@class.GetNamespace()}.Edit{@class.GetName()}> items, global::{TypeFullNames.CancellationToken} cancellationToken)");
 
         stringBuilder.AppendLine("    {");
         stringBuilder.AppendLine("        foreach (var item in items)");
