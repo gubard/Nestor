@@ -350,7 +350,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static async {TypeFullNames.ValueTask}<global::{@class.GetFullName()}?> Find{@class.GetName()}(global::{TypeFullNames.Guid} id, global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} cancellationToken)");
+            $"    public static async {TypeFullNames.ValueTask}<global::{@class.GetFullName()}?> Find{@class.GetName()}Async(global::{TypeFullNames.Guid} id, global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} cancellationToken)");
 
         stringBuilder.AppendLine("    {");
         var groupBys = new Span<string>(new string[properties.Length]);
