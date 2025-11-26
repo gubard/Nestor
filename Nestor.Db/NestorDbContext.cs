@@ -2,14 +2,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Nestor.Db;
 
-public class NestorDbContext<TConfiguration> : DbContext
+public abstract class NestorDbContext<TConfiguration> : DbContext
     where TConfiguration : IEntityTypeConfiguration<EventEntity>, new()
 {
-    public NestorDbContext()
+    protected NestorDbContext()
     {
     }
 
-    public NestorDbContext(DbContextOptions options) : base(options)
+    protected NestorDbContext(DbContextOptions options) : base(options)
     {
     }
 
