@@ -1,6 +1,6 @@
 using System;
 
-namespace Nestor.Db;
+namespace Nestor.Db.Models;
 
 public class EventEntity
 {

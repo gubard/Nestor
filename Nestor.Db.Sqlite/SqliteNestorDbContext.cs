@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Nestor.Db.Services;
 
 namespace Nestor.Db.Sqlite;
 

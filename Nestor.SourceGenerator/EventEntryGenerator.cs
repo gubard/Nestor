@@ -10,7 +10,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     private void CreateIsExists(ClassDeclarationSyntax @class, StringBuilder stringBuilder)
     {
         stringBuilder.AppendLine(
-            "    public static bool IsExists(global::System.Guid id, global::System.Linq.IQueryable<global::Nestor.Db.EventEntity> events)");
+            $"    public static bool IsExists(global::System.Guid id, global::System.Linq.IQueryable<global::{TypeFullNames.EventEntity}> events)");
 
         stringBuilder.AppendLine("    {");
 
@@ -61,7 +61,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("    {");
 
         stringBuilder.AppendLine(
-            $"        context.AddRange(ids.Select(x => new global::Nestor.Db.EventEntity {{ UserId = userId, EntityId = x, EntityType = nameof(global::{@class.GetFullName()}), EntityProperty = \"__IS_DELETED__\", EntityBooleanValue = true }}));");
+            $"        context.AddRange(ids.Select(x => new global::{TypeFullNames.EventEntity} {{ UserId = userId, EntityId = x, EntityType = nameof(global::{@class.GetFullName()}), EntityProperty = \"__IS_DELETED__\", EntityBooleanValue = true }}));");
 
         stringBuilder.AppendLine("    }");
     }
@@ -88,7 +88,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static global::{@class.GetFullName()}[] Get{@class.GetName()}s(global::System.Linq.IQueryable<global::Nestor.Db.EventEntity> events)");
+            $"    public static global::{@class.GetFullName()}[] Get{@class.GetName()}s(global::System.Linq.IQueryable<global::{TypeFullNames.EventEntity}> events)");
 
         stringBuilder.AppendLine("    {");
         var groupBys = new Span<string>(new string[properties.Length]);
@@ -225,7 +225,7 @@ public class EventEntryGenerator : IIncrementalGenerator
             stringBuilder.AppendLine("            {");
 
             stringBuilder.AppendLine(
-                $"                context.Add(new global::Nestor.Db.EventEntity {{ EntityId = item.{idName}, EntityType = nameof(global::{@class.GetFullName()}), EntityProperty = nameof({property.GetName()}), {GetEntityValueName(property, compilation)} = ({GetEntityTypeName(property.Type, compilation)})item.{property.GetName()}, UserId = userId}});");
+                $"                context.Add(new global::{TypeFullNames.EventEntity} {{ EntityId = item.{idName}, EntityType = nameof(global::{@class.GetFullName()}), EntityProperty = nameof({property.GetName()}), {GetEntityValueName(property, compilation)} = ({GetEntityTypeName(property.Type, compilation)})item.{property.GetName()}, UserId = userId}});");
 
             stringBuilder.AppendLine("            }");
             stringBuilder.AppendLine();
@@ -280,7 +280,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static global::{@class.GetFullName()}? Find{@class.GetName()}(global::System.Guid id, global::System.Linq.IQueryable<global::Nestor.Db.EventEntity> events)");
+            $"    public static global::{@class.GetFullName()}? Find{@class.GetName()}(global::System.Guid id, global::System.Linq.IQueryable<global::{TypeFullNames.EventEntity}> events)");
 
         stringBuilder.AppendLine("    {");
         var groupBys = new Span<string>(new string[properties.Length]);
@@ -427,7 +427,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("    {");
 
         stringBuilder.AppendLine(
-            "        var events = new global::System.Collections.Generic.List<global::Nestor.Db.EventEntity>();");
+            $"        var events = new global::System.Collections.Generic.List<global::{TypeFullNames.EventEntity}>();");
 
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("        foreach (var item in items)");
@@ -440,7 +440,7 @@ public class EventEntryGenerator : IIncrementalGenerator
                 continue;
             }
 
-            stringBuilder.AppendLine("            events.Add(new global::Nestor.Db.EventEntity");
+            stringBuilder.AppendLine($"            events.Add(new global::{TypeFullNames.EventEntity}");
             stringBuilder.AppendLine("            {");
             stringBuilder.AppendLine($"                EntityId = item.{idName},");
             stringBuilder.AppendLine($"                EntityType = nameof(global::{@class.GetFullName()}),");

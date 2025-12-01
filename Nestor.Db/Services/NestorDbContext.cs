@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Nestor.Db.Models;
 
-namespace Nestor.Db;
+namespace Nestor.Db.Services;
 
 public abstract class NestorDbContext<TConfiguration> : DbContext
     where TConfiguration : IEntityTypeConfiguration<EventEntity>, new()
