@@ -132,7 +132,7 @@ public class EventEntryGenerator : IIncrementalGenerator
             }
 
             stringBuilder.AppendLine(
-                $"             {property.GetName()} = ({property.Type})x.Value[nameof({property.GetName()})].{GetEntityValueName(property, compilation)},");
+                $"             {property.GetName()} = (global::{property.Type.GetFullName(compilation)})x.Value[nameof({property.GetName()})].{GetEntityValueName(property, compilation)},");
         }
 
         stringBuilder.AppendLine("        }).ToArray();");
@@ -192,7 +192,7 @@ public class EventEntryGenerator : IIncrementalGenerator
             }
 
             stringBuilder.AppendLine(
-                $"             {property.GetName()} = ({property.Type})x.Value[nameof({property.GetName()})].{GetEntityValueName(property, compilation)},");
+                $"             {property.GetName()} = (global::{property.Type.GetFullName(compilation)})x.Value[nameof({property.GetName()})].{GetEntityValueName(property, compilation)},");
         }
 
         stringBuilder.AppendLine("        }).ToArray();");
@@ -335,7 +335,7 @@ public class EventEntryGenerator : IIncrementalGenerator
             }
 
             stringBuilder.AppendLine(
-                $"             {property.GetName()} = properties.TryGetValue(nameof({property.GetName()}), out var propertyValue{propertyIndex}) ? ({property.Type})propertyValue{propertyIndex++}.{GetEntityValueName(property, compilation)} : default({property.Type}),");
+                $"             {property.GetName()} = properties.TryGetValue(nameof({property.GetName()}), out var propertyValue{propertyIndex}) ? (global::{property.Type.GetFullName(compilation)})propertyValue{propertyIndex++}.{GetEntityValueName(property, compilation)} : default(global::{property.Type.GetFullName(compilation)}),");
         }
 
         stringBuilder.AppendLine("        };");
@@ -406,7 +406,7 @@ public class EventEntryGenerator : IIncrementalGenerator
             }
 
             stringBuilder.AppendLine(
-                $"             {property.GetName()} = properties.TryGetValue(nameof({property.GetName()}), out var propertyValue{propertyIndex}) ? ({property.Type})propertyValue{propertyIndex++}.{GetEntityValueName(property, compilation)} : default({property.Type}),");
+                $"             {property.GetName()} = properties.TryGetValue(nameof({property.GetName()}), out var propertyValue{propertyIndex}) ? (global::{property.Type.GetFullName(compilation)})propertyValue{propertyIndex++}.{GetEntityValueName(property, compilation)} : default(global::{property.Type.GetFullName(compilation)}),");
         }
 
         stringBuilder.AppendLine("        };");
@@ -511,6 +511,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         string idName,
         ClassDeclarationSyntax @class,
         Span<PropertyDeclarationSyntax> properties,
+        Compilation compilation,
         StringBuilder stringBuilder
     )
     {
@@ -531,7 +532,7 @@ public class EventEntryGenerator : IIncrementalGenerator
             }
 
             stringBuilder.AppendLine($"    public bool IsEdit{property.GetName()} {{ get; set; }}");
-            stringBuilder.AppendLine($"    public {property.Type} {property.GetName()} {{ get; set; }}");
+            stringBuilder.AppendLine($"    public {property.Type.GetFullName(compilation)} {property.GetName()} {{ get; set; }}");
         }
 
         stringBuilder.AppendLine("}");
@@ -681,7 +682,7 @@ public class EventEntryGenerator : IIncrementalGenerator
                     CreateEditMethodA(idName, source, properties, compilation, stringBuilder);
                     stringBuilder.AppendLine("}");
                     stringBuilder.AppendLine();
-                    CreateEditClass(idName, source, properties, stringBuilder);
+                    CreateEditClass(idName, source, properties, compilation, stringBuilder);
                     var text = stringBuilder.ToString();
                     spc.AddSource($"EventEntity.{source.GetName()}.g.cs", text);
                 }

@@ -34,6 +34,14 @@ public static class Extensions
         return $"{syntax.GetNamespace()}.{syntax.GetName()}";
     }
 
+    public static string GetFullName(this TypeSyntax syntax, Compilation compilation)
+    {
+        var semanticModel = compilation.GetSemanticModel(syntax.SyntaxTree);
+        var typeInfo = semanticModel.GetTypeInfo(syntax);
+
+        return $"{typeInfo.Type?.ContainingNamespace.ToDisplayString()}.{syntax.GetRealName()}";
+    }
+
     public static string GetName(this PropertyDeclarationSyntax syntax)
     {
         return syntax.Identifier.Text;
