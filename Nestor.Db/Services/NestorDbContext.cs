@@ -17,6 +17,7 @@ public abstract class NestorDbContext<TConfiguration> : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new TConfiguration());
+        modelBuilder.ApplyConfiguration(new TempEntityTypeConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 }
