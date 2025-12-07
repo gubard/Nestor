@@ -6,6 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\Gaia\Gaia\Gaia.csproj" />
       <ProjectReference Include="..\Nestor.Db\Nestor.Db.csproj" />
     </ItemGroup>
 
