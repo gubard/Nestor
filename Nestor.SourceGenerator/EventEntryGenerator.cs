@@ -33,12 +33,12 @@ public class EventEntryGenerator : IIncrementalGenerator
     private void CreateIsExistsA(ClassDeclarationSyntax @class, StringBuilder stringBuilder)
     {
         stringBuilder.AppendLine(
-            $"    public static async global::{TypeFullNames.ValueTask}<bool> IsExistsAsync(global::{TypeFullNames.Guid} id, global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} cancellationToken)");
+            $"    public static async global::{TypeFullNames.ValueTask}<bool> IsExistsAsync(global::{TypeFullNames.Guid} id, global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} ct)");
 
         stringBuilder.AppendLine("    {");
 
         stringBuilder.AppendLine(
-            $"        var isDeleted = await events.FirstOrDefaultAsync(x => x.EntityId == id && x.EntityType == nameof(global::{@class.GetFullName()}) && x.EntityProperty == \"__IS_DELETED__\", cancellationToken);");
+            $"        var isDeleted = await events.FirstOrDefaultAsync(x => x.EntityId == id && x.EntityType == nameof(global::{@class.GetFullName()}) && x.EntityProperty == \"__IS_DELETED__\", ct);");
 
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("        if(isDeleted is not null)");
@@ -48,7 +48,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         stringBuilder.AppendLine();
 
         stringBuilder.AppendLine(
-            $"        return await events.AnyAsync(x => x.EntityId == id && x.EntityType == nameof(global::{@class.GetFullName()}), cancellationToken);");
+            $"        return await events.AnyAsync(x => x.EntityId == id && x.EntityType == nameof(global::{@class.GetFullName()}), ct);");
 
         stringBuilder.AppendLine("    }");
     }
@@ -69,12 +69,12 @@ public class EventEntryGenerator : IIncrementalGenerator
     private void CreateDeleteA(ClassDeclarationSyntax @class, StringBuilder stringBuilder)
     {
         stringBuilder.AppendLine(
-            $"    public static async global::{TypeFullNames.ValueTask} Delete{@class.GetName()}sAsync(global::{TypeFullNames.DbContext} context, string userId, global::{TypeFullNames.CancellationToken} cancellationToken, params global::{TypeFullNames.Guid}[] ids)");
+            $"    public static async global::{TypeFullNames.ValueTask} Delete{@class.GetName()}sAsync(global::{TypeFullNames.DbContext} context, string userId, global::{TypeFullNames.CancellationToken} ct, params global::{TypeFullNames.Guid}[] ids)");
 
         stringBuilder.AppendLine("    {");
 
         stringBuilder.AppendLine(
-            $"        await context.AddRangeAsync(ids.Select(x => new global::{TypeFullNames.EventEntity} {{ UserId = userId,  EntityId = x, EntityType = nameof(global::{@class.GetFullName()}), EntityProperty = \"__IS_DELETED__\", EntityBooleanValue = true }}), cancellationToken);");
+            $"        await context.AddRangeAsync(ids.Select(x => new global::{TypeFullNames.EventEntity} {{ UserId = userId,  EntityId = x, EntityType = nameof(global::{@class.GetFullName()}), EntityProperty = \"__IS_DELETED__\", EntityBooleanValue = true }}), ct);");
 
         stringBuilder.AppendLine("    }");
     }
@@ -148,7 +148,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static async global::{TypeFullNames.ValueTask}<global::{@class.GetFullName()}[]> Get{@class.GetName()}sAsync(global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} cancellationToken)");
+            $"    public static async global::{TypeFullNames.ValueTask}<global::{@class.GetFullName()}[]> Get{@class.GetName()}sAsync(global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} ct)");
 
         stringBuilder.AppendLine("    {");
         var groupBys = new Span<string>(new string[properties.Length]);
@@ -174,7 +174,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         stringBuilder.AppendLine($"        var query = events.Where(y => {Concat(groupBys)}.Contains(y.Id));");
 
         stringBuilder.AppendLine(
-            "        var properties = (await query.ToArrayAsync(cancellationToken)).GroupBy(x => x.EntityId).ToDictionary(x => x.Key, x => x.ToDictionary(y => y.EntityProperty));");
+            "        var properties = (await query.ToArrayAsync(ct)).GroupBy(x => x.EntityId).ToDictionary(x => x.Key, x => x.ToDictionary(y => y.EntityProperty));");
 
         stringBuilder.AppendLine();
 
@@ -244,7 +244,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static async global::{TypeFullNames.ValueTask} Edit{@class.GetName()}sAsync(global::{TypeFullNames.DbContext} context, string userId, global::{TypeFullNames.IEnumerable}<global::{@class.GetNamespace()}.Edit{@class.GetName()}> items, global::{TypeFullNames.CancellationToken} cancellationToken)");
+            $"    public static async global::{TypeFullNames.ValueTask} Edit{@class.GetName()}sAsync(global::{TypeFullNames.DbContext} context, string userId, global::{TypeFullNames.IEnumerable}<global::{@class.GetNamespace()}.Edit{@class.GetName()}> items, global::{TypeFullNames.CancellationToken} ct)");
 
         stringBuilder.AppendLine("    {");
         stringBuilder.AppendLine("        foreach (var item in items)");
@@ -261,7 +261,7 @@ public class EventEntryGenerator : IIncrementalGenerator
             stringBuilder.AppendLine("            {");
 
             stringBuilder.AppendLine(
-                $"                await context.AddAsync(new global::{TypeFullNames.EventEntity} {{ EntityId = item.{idName}, EntityType = nameof(global::{@class.GetFullName()}), EntityProperty = nameof({property.GetName()}), {GetEntityValueName(property, compilation)} = ({GetEntityTypeName(property.Type, compilation)})item.{property.GetName()}, UserId = userId}}, cancellationToken);");
+                $"                await context.AddAsync(new global::{TypeFullNames.EventEntity} {{ EntityId = item.{idName}, EntityType = nameof(global::{@class.GetFullName()}), EntityProperty = nameof({property.GetName()}), {GetEntityValueName(property, compilation)} = ({GetEntityTypeName(property.Type, compilation)})item.{property.GetName()}, UserId = userId}}, ct);");
 
             stringBuilder.AppendLine("            }");
             stringBuilder.AppendLine();
@@ -351,7 +351,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static async {TypeFullNames.ValueTask}<global::{@class.GetFullName()}?> Find{@class.GetName()}Async(global::{TypeFullNames.Guid} id, global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} cancellationToken)");
+            $"    public static async {TypeFullNames.ValueTask}<global::{@class.GetFullName()}?> Find{@class.GetName()}Async(global::{TypeFullNames.Guid} id, global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} ct)");
 
         stringBuilder.AppendLine("    {");
         var groupBys = new Span<string>(new string[properties.Length]);
@@ -377,7 +377,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         stringBuilder.AppendLine(
             $"        var query = events.Where(y => y.Id == {string.Join(" || y.Id == ", groupBys.ToArray())});");
 
-        stringBuilder.AppendLine("        var properties = (await query.ToArrayAsync(cancellationToken)).ToDictionary(x => x.EntityProperty);");
+        stringBuilder.AppendLine("        var properties = (await query.ToArrayAsync(ct)).ToDictionary(x => x.EntityProperty);");
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("        if(properties.Count == 0)");
         stringBuilder.AppendLine("        {");
@@ -469,7 +469,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static async {TypeFullNames.ValueTask} Add{@class.GetName()}sAsync(global::{TypeFullNames.DbContext} context, string userId, global::{TypeFullNames.CancellationToken} cancellationToken, params global::{@class.GetFullName()}[] items)");
+            $"    public static async {TypeFullNames.ValueTask} Add{@class.GetName()}sAsync(global::{TypeFullNames.DbContext} context, string userId, global::{TypeFullNames.CancellationToken} ct, params global::{@class.GetFullName()}[] items)");
 
         stringBuilder.AppendLine("    {");
 
@@ -503,7 +503,7 @@ public class EventEntryGenerator : IIncrementalGenerator
 
         stringBuilder.AppendLine("        }");
         stringBuilder.AppendLine();
-        stringBuilder.AppendLine("        await context.AddRangeAsync(events, cancellationToken);");
+        stringBuilder.AppendLine("        await context.AddRangeAsync(events, ct);");
         stringBuilder.AppendLine("    }");
     }
     
