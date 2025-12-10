@@ -42,6 +42,7 @@ public abstract class
         CancellationToken ct);
 
     public abstract TPostResponse Post(TPostRequest request);
+    public abstract TGetResponse Get(TGetRequest request);
 
     public async ValueTask SaveEventsAsync(ReadOnlyMemory<EventEntity> events,
         CancellationToken ct)
