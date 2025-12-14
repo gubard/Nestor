@@ -10,7 +10,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     private void CreateIsExists(ClassDeclarationSyntax @class, StringBuilder stringBuilder)
     {
         stringBuilder.AppendLine(
-            $"    public static bool IsExists(global::System.Guid id, global::System.Linq.IQueryable<global::{TypeFullNames.EventEntity}> events)");
+            $"    public static bool IsEntityExists(global::System.Guid id, global::System.Linq.IQueryable<global::{TypeFullNames.EventEntity}> events)");
 
         stringBuilder.AppendLine("    {");
 
@@ -33,7 +33,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     private void CreateIsExistsA(ClassDeclarationSyntax @class, StringBuilder stringBuilder)
     {
         stringBuilder.AppendLine(
-            $"    public static async global::{TypeFullNames.ValueTask}<bool> IsExistsAsync(global::{TypeFullNames.Guid} id, global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} ct)");
+            $"    public static async global::{TypeFullNames.ValueTask}<bool> IsEntityExistsAsync(global::{TypeFullNames.Guid} id, global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} ct)");
 
         stringBuilder.AppendLine("    {");
 
@@ -56,7 +56,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     private void CreateDelete(ClassDeclarationSyntax @class, StringBuilder stringBuilder)
     {
         stringBuilder.AppendLine(
-            $"    public static void Delete{@class.GetName()}s(global::Microsoft.EntityFrameworkCore.DbContext context, string userId, params global::System.Guid[] ids)");
+            $"    public static void DeleteEntities(global::Microsoft.EntityFrameworkCore.DbContext context, string userId, params global::System.Guid[] ids)");
 
         stringBuilder.AppendLine("    {");
 
@@ -69,7 +69,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     private void CreateDeleteA(ClassDeclarationSyntax @class, StringBuilder stringBuilder)
     {
         stringBuilder.AppendLine(
-            $"    public static async global::{TypeFullNames.ValueTask} Delete{@class.GetName()}sAsync(global::{TypeFullNames.DbContext} context, string userId, global::{TypeFullNames.CancellationToken} ct, params global::{TypeFullNames.Guid}[] ids)");
+            $"    public static async global::{TypeFullNames.ValueTask} DeleteEntitiesAsync(global::{TypeFullNames.DbContext} context, string userId, global::{TypeFullNames.CancellationToken} ct, params global::{TypeFullNames.Guid}[] ids)");
 
         stringBuilder.AppendLine("    {");
 
@@ -88,7 +88,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static global::{@class.GetFullName()}[] Get{@class.GetName()}s(global::System.Linq.IQueryable<global::{TypeFullNames.EventEntity}> events)");
+            $"    public static global::{@class.GetFullName()}[] GetEntities(global::System.Linq.IQueryable<global::{TypeFullNames.EventEntity}> events)");
 
         stringBuilder.AppendLine("    {");
         var groupBys = new Span<string>(new string[properties.Length]);
@@ -148,7 +148,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static async global::{TypeFullNames.ValueTask}<global::{@class.GetFullName()}[]> Get{@class.GetName()}sAsync(global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} ct)");
+            $"    public static async global::{TypeFullNames.ValueTask}<global::{@class.GetFullName()}[]> GetEntitiesAsync(global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} ct)");
 
         stringBuilder.AppendLine("    {");
         var groupBys = new Span<string>(new string[properties.Length]);
@@ -208,7 +208,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static void Edit{@class.GetName()}s(global::Microsoft.EntityFrameworkCore.DbContext context, string userId, global::System.Collections.Generic.IEnumerable<global::{@class.GetNamespace()}.Edit{@class.GetName()}> items)");
+            $"    public static void EditEntities(global::Microsoft.EntityFrameworkCore.DbContext context, string userId, global::System.Collections.Generic.IEnumerable<global::{@class.GetNamespace()}.Edit{@class.GetName()}> items)");
 
         stringBuilder.AppendLine("    {");
         stringBuilder.AppendLine("        foreach (var item in items)");
@@ -244,7 +244,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static async global::{TypeFullNames.ValueTask} Edit{@class.GetName()}sAsync(global::{TypeFullNames.DbContext} context, string userId, global::{TypeFullNames.IEnumerable}<global::{@class.GetNamespace()}.Edit{@class.GetName()}> items, global::{TypeFullNames.CancellationToken} ct)");
+            $"    public static async global::{TypeFullNames.ValueTask} EditEntitiesAsync(global::{TypeFullNames.DbContext} context, string userId, global::{TypeFullNames.IEnumerable}<global::{@class.GetNamespace()}.Edit{@class.GetName()}> items, global::{TypeFullNames.CancellationToken} ct)");
 
         stringBuilder.AppendLine("    {");
         stringBuilder.AppendLine("        foreach (var item in items)");
@@ -280,7 +280,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static global::{@class.GetFullName()}? Find{@class.GetName()}(global::System.Guid id, global::System.Linq.IQueryable<global::{TypeFullNames.EventEntity}> events)");
+            $"    public static global::{@class.GetFullName()}? FindEntity(global::System.Guid id, global::System.Linq.IQueryable<global::{TypeFullNames.EventEntity}> events)");
 
         stringBuilder.AppendLine("    {");
         var groupBys = new Span<string>(new string[properties.Length]);
@@ -351,7 +351,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static async {TypeFullNames.ValueTask}<global::{@class.GetFullName()}?> Find{@class.GetName()}Async(global::{TypeFullNames.Guid} id, global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} ct)");
+            $"    public static async {TypeFullNames.ValueTask}<global::{@class.GetFullName()}?> FindEntityAsync(global::{TypeFullNames.Guid} id, global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} ct)");
 
         stringBuilder.AppendLine("    {");
         var groupBys = new Span<string>(new string[properties.Length]);
@@ -422,7 +422,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static void Add{@class.GetName()}s(global::Microsoft.EntityFrameworkCore.DbContext context, string userId, params global::{@class.GetFullName()}[] items)");
+            $"    public static void AddEntities(global::Microsoft.EntityFrameworkCore.DbContext context, string userId, params global::{@class.GetFullName()}[] items)");
 
         stringBuilder.AppendLine("    {");
 
@@ -469,7 +469,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static async {TypeFullNames.ValueTask} Add{@class.GetName()}sAsync(global::{TypeFullNames.DbContext} context, string userId, global::{TypeFullNames.CancellationToken} ct, params global::{@class.GetFullName()}[] items)");
+            $"    public static async {TypeFullNames.ValueTask} AddEntitiesAsync(global::{TypeFullNames.DbContext} context, string userId, global::{TypeFullNames.CancellationToken} ct, params global::{@class.GetFullName()}[] items)");
 
         stringBuilder.AppendLine("    {");
 
