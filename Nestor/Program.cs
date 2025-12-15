@@ -16,11 +16,9 @@ try
     jsonRpc.StartListening();
     var calculator = jsonRpc.Attach<IExampleService>();
 
-    calculator.CreateExample(new()
-    {
-        Id = Guid.NewGuid(),
-        ExampleStringValue = "asl;dasdmal;sals;mdasc"
-    });
+    calculator.CreateExample(
+        new() { Id = Guid.NewGuid(), ExampleStringValue = "asl;dasdmal;sals;mdasc" }
+    );
 
     // Keep the client alive to receive any potential server-sent notifications
     Console.WriteLine("Client: Press any key to close WebSocket connection.");

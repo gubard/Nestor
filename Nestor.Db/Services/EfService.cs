@@ -8,23 +8,20 @@ using Nestor.Db.Models;
 
 namespace Nestor.Db.Services;
 
-public interface
-    IEfService<in TGetRequest, in TPostRequest, TGetResponse, TPostResponse> :
-    IService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
+public interface IEfService<in TGetRequest, in TPostRequest, TGetResponse, TPostResponse>
+    : IService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
     where TGetResponse : IValidationErrors, new()
     where TPostResponse : IValidationErrors, new()
 {
-    ValueTask SaveEventsAsync(ReadOnlyMemory<EventEntity> events,
-        CancellationToken ct);
+    ValueTask SaveEventsAsync(ReadOnlyMemory<EventEntity> events, CancellationToken ct);
 
     void SaveEvents(ReadOnlyMemory<EventEntity> events);
     ValueTask<long> GetLastIdAsync(CancellationToken ct);
     long GetLastId();
 }
 
-public abstract class
-    EfService<TGetRequest, TPostRequest, TGetResponse, TPostResponse> :
-    IEfService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
+public abstract class EfService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
+    : IEfService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
     where TGetResponse : IValidationErrors, new()
     where TPostResponse : IValidationErrors, new()
 {
@@ -35,17 +32,14 @@ public abstract class
         DbContext = dbContext;
     }
 
-    public abstract ValueTask<TGetResponse> GetAsync(TGetRequest request,
-        CancellationToken ct);
+    public abstract ValueTask<TGetResponse> GetAsync(TGetRequest request, CancellationToken ct);
 
-    public abstract ValueTask<TPostResponse> PostAsync(TPostRequest request,
-        CancellationToken ct);
+    public abstract ValueTask<TPostResponse> PostAsync(TPostRequest request, CancellationToken ct);
 
     public abstract TPostResponse Post(TPostRequest request);
     public abstract TGetResponse Get(TGetRequest request);
 
-    public async ValueTask SaveEventsAsync(ReadOnlyMemory<EventEntity> events,
-        CancellationToken ct)
+    public async ValueTask SaveEventsAsync(ReadOnlyMemory<EventEntity> events, CancellationToken ct)
     {
         if (events.IsEmpty)
         {
@@ -69,8 +63,7 @@ public abstract class
 
     public async ValueTask<long> GetLastIdAsync(CancellationToken ct)
     {
-        var lastId = await DbContext.Set<EventEntity>()
-           .MaxAsync(x => (long?)x.Id, ct);
+        var lastId = await DbContext.Set<EventEntity>().MaxAsync(x => (long?)x.Id, ct);
 
         if (lastId is null)
         {
@@ -82,8 +75,7 @@ public abstract class
 
     public long GetLastId()
     {
-        var lastId = DbContext.Set<EventEntity>()
-           .Max(x => (long?)x.Id);
+        var lastId = DbContext.Set<EventEntity>().Max(x => (long?)x.Id);
 
         if (lastId is null)
         {

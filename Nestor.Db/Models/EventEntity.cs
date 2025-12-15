@@ -9,7 +9,7 @@ public class EventEntity
     public string EntityType { get; set; } = string.Empty;
     public string EntityProperty { get; set; } = string.Empty;
     public string UserId { get; set; } = string.Empty;
-    public DateTimeOffset CreatedAt { get; set; } =  DateTimeOffset.Now;
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.Now;
     public bool? EntityBooleanValue { get; set; }
     public byte? EntityByteValue { get; set; }
     public ushort? EntityUInt16Value { get; set; }

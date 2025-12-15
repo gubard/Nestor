@@ -7,7 +7,14 @@ public static class FileInfoExtension
 {
     public static SqliteNestorDbContext InitDbContext(this FileInfo file)
     {
-        var context = new SqliteNestorDbContext(new DbContextOptionsBuilder<SqliteNestorDbContext>().UseSqlite($"Data Source={file}", x => x.MigrationsAssembly(typeof(SqliteNestorDbContext).Assembly)).Options);
+        var context = new SqliteNestorDbContext(
+            new DbContextOptionsBuilder<SqliteNestorDbContext>()
+                .UseSqlite(
+                    $"Data Source={file}",
+                    x => x.MigrationsAssembly(typeof(SqliteNestorDbContext).Assembly)
+                )
+                .Options
+        );
         var migrationFile = file.FileInSameDir($"{file.GetFileNameWithoutExtension()}.migration");
         var lastMigration = context.Database.GetMigrations().Last();
 

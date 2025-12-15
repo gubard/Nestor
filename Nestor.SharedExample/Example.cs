@@ -19,7 +19,7 @@ public partial class Example
     public double ExampleDoubleValue { get; set; }
     public decimal ExampleDecimalValue { get; set; }
     public char ExampleCharValue { get; set; }
-    public byte[] ExampleByteArrayValue { get; set; } =  [];
+    public byte[] ExampleByteArrayValue { get; set; } = [];
     public string ExampleStringValue { get; set; } = string.Empty;
     public Guid ExampleGuidValue { get; set; }
     public DateTime ExampleDateTimeValue { get; set; }

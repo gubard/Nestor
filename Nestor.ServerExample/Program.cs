@@ -10,7 +10,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-builder.Services.AddDbContext<ExampleDbContext>(options => options.UseSqlite("Data Source=example.db"));
+builder.Services.AddDbContext<ExampleDbContext>(options =>
+    options.UseSqlite("Data Source=example.db")
+);
 builder.Services.AddTransient<IExampleService, ExampleService>();
 var app = builder.Build();
 
@@ -26,28 +28,31 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseWebSockets();
 
-app.Use(async (context, next) =>
-{
-    if (context.Request.Path == "/ws-jsonrpc")
+app.Use(
+    async (context, next) =>
     {
-        if (context.WebSockets.IsWebSocketRequest)
+        if (context.Request.Path == "/ws-jsonrpc")
         {
-            using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-            var calculatorService = context.RequestServices.GetRequiredService<IExampleService>();
-            await using var handler = new WebSocketMessageHandler(webSocket);
-            using var jsonRpc = new JsonRpc(handler, calculatorService);
-            jsonRpc.StartListening();
-            await jsonRpc.Completion;
+            if (context.WebSockets.IsWebSocketRequest)
+            {
+                using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+                var calculatorService =
+                    context.RequestServices.GetRequiredService<IExampleService>();
+                await using var handler = new WebSocketMessageHandler(webSocket);
+                using var jsonRpc = new JsonRpc(handler, calculatorService);
+                jsonRpc.StartListening();
+                await jsonRpc.Completion;
+            }
+            else
+            {
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            }
         }
         else
         {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await next(context);
         }
     }
-    else
-    {
-        await next(context);
-    }
-});
+);
 
 app.Run();

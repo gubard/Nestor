@@ -15,11 +15,20 @@ namespace Nestor.Db.Sqlite.Migrations
                 name: "EventEntity",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "INTEGER", nullable: false)
+                    Id = table
+                        .Column<long>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     EntityId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    EntityType = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
-                    EntityProperty = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
+                    EntityType = table.Column<string>(
+                        type: "TEXT",
+                        maxLength: 255,
+                        nullable: false
+                    ),
+                    EntityProperty = table.Column<string>(
+                        type: "TEXT",
+                        maxLength: 255,
+                        nullable: false
+                    ),
                     UserId = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
                     EntityBooleanValue = table.Column<bool>(type: "INTEGER", nullable: true),
@@ -39,22 +48,25 @@ namespace Nestor.Db.Sqlite.Migrations
                     EntityStringValue = table.Column<string>(type: "TEXT", nullable: true),
                     EntityGuidValue = table.Column<Guid>(type: "TEXT", nullable: true),
                     EntityDateTimeValue = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    EntityDateTimeOffsetValue = table.Column<DateTimeOffset>(type: "TEXT", nullable: true),
+                    EntityDateTimeOffsetValue = table.Column<DateTimeOffset>(
+                        type: "TEXT",
+                        nullable: true
+                    ),
                     EntityDateOnlyValue = table.Column<DateOnly>(type: "TEXT", nullable: true),
                     EntityTimeOnlyValue = table.Column<TimeOnly>(type: "TEXT", nullable: true),
-                    EntityTimeSpanValue = table.Column<TimeSpan>(type: "TEXT", nullable: true)
+                    EntityTimeSpanValue = table.Column<TimeSpan>(type: "TEXT", nullable: true),
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_EventEntity", x => x.Id);
-                });
+                }
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "EventEntity");
+            migrationBuilder.DropTable(name: "EventEntity");
         }
     }
 }

@@ -15,19 +15,19 @@ namespace Nestor.Db.Sqlite.Migrations
                 name: "TempEntity",
                 columns: table => new
                 {
-                    EntityId = table.Column<Guid>(type: "TEXT", nullable: false)
+                    EntityId = table.Column<Guid>(type: "TEXT", nullable: false),
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_TempEntity", x => x.EntityId);
-                });
+                }
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "TempEntity");
+            migrationBuilder.DropTable(name: "TempEntity");
         }
     }
 }
