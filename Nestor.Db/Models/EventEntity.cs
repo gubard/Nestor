@@ -31,4 +31,5 @@ public class EventEntity
     public DateOnly? EntityDateOnlyValue { get; set; }
     public TimeOnly? EntityTimeOnlyValue { get; set; }
     public TimeSpan? EntityTimeSpanValue { get; set; }
+    public bool IsLast { get; set; }
 }
