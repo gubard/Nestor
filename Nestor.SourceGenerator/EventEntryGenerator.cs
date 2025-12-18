@@ -103,7 +103,7 @@ public class EventEntryGenerator : IIncrementalGenerator
 
         stringBuilder.AppendLine("    {");
         stringBuilder.AppendLine(
-            "        var properties = events.Where(x => x.IsLast == true).GroupBy(x => x.EntityId).ToArray().ToDictionary(x => x.Key, x => x.ToDictionary(y => y.EntityProperty));"
+            "        var properties = events.Where(x => x.IsLast == true).GroupBy(x => x.EntityId).ToArray().ToDictionary(x => x.Key, x => x.ToDictionary(y => y.EntityProperty).ToFrozenDictionary()).ToFrozenDictionary();"
         );
 
         stringBuilder.AppendLine();
@@ -145,7 +145,7 @@ public class EventEntryGenerator : IIncrementalGenerator
 
         stringBuilder.AppendLine("    {");
         stringBuilder.AppendLine(
-            "        var properties = (await events.Where(x => x.IsLast == true).GroupBy(x => x.EntityId).ToArrayAsync(ct)).ToDictionary(x => x.Key, x => x.ToDictionary(y => y.EntityProperty));"
+            "        var properties = (await events.Where(x => x.IsLast == true).GroupBy(x => x.EntityId).ToArrayAsync(ct)).ToDictionary(x => x.Key, x => x.ToDictionary(y => y.EntityProperty).ToFrozenDictionary()).ToFrozenDictionary();"
         );
 
         stringBuilder.AppendLine();
@@ -317,7 +317,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         );
 
         stringBuilder.AppendLine(
-            "        var properties = query.ToArray().ToDictionary(x => x.EntityProperty);"
+            "        var properties = query.ToArray().ToDictionary(x => x.EntityProperty).ToFrozenDictionary();"
         );
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("        if(properties.Count == 0)");
@@ -394,7 +394,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         );
 
         stringBuilder.AppendLine(
-            "        var properties = (await query.ToArrayAsync(ct)).ToDictionary(x => x.EntityProperty);"
+            "        var properties = (await query.ToArrayAsync(ct)).ToDictionary(x => x.EntityProperty).ToFrozenDictionary();"
         );
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("        if(properties.Count == 0)");
@@ -700,6 +700,7 @@ public class EventEntryGenerator : IIncrementalGenerator
                         stringBuilder.AppendLine("#pragma warning disable CS8618");
                         stringBuilder.AppendLine();
                         stringBuilder.AppendLine("using System.Linq;");
+                        stringBuilder.AppendLine("using System.Collections.Frozen;");
                         stringBuilder.AppendLine("using Microsoft.EntityFrameworkCore;");
                         stringBuilder.AppendLine();
                         stringBuilder.AppendLine($"namespace {source.GetNamespace()};");
