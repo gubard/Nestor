@@ -15,15 +15,14 @@ namespace Nestor.Db.Sqlite.Migrations
                 table: "EventEntity",
                 type: "INTEGER",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: false
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "IsLast",
-                table: "EventEntity");
+            migrationBuilder.DropColumn(name: "IsLast", table: "EventEntity");
         }
     }
 }

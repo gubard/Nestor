@@ -15,6 +15,7 @@ public static class FileInfoExtension
                 )
                 .Options
         );
+
         var migrationFile = file.FileInSameDir($"{file.GetFileNameWithoutExtension()}.migration");
         var lastMigration = context.Database.GetMigrations().Last();
 
