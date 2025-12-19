@@ -7,7 +7,10 @@ namespace Nestor.SourceGenerator;
 [Generator]
 public class EventEntryGenerator : IIncrementalGenerator
 {
-    private void CreateIsExistsMethod(ClassDeclarationSyntax @class, StringBuilder stringBuilder)
+    private void CreateIsExistsMethod(
+        ClassDeclarationSyntax @class,
+        CSharpStringBuilder stringBuilder
+    )
     {
         stringBuilder.AppendLine(
             $"    public static bool IsEntityExists(global::System.Guid id, global::System.Linq.IQueryable<global::{TypeFullNames.EventEntity}> events)"
@@ -33,7 +36,10 @@ public class EventEntryGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("    }");
     }
 
-    private void CreateIsExistsMethodA(ClassDeclarationSyntax @class, StringBuilder stringBuilder)
+    private void CreateIsExistsMethodA(
+        ClassDeclarationSyntax @class,
+        CSharpStringBuilder stringBuilder
+    )
     {
         stringBuilder.AppendLine(
             $"    public static async global::{TypeFullNames.ValueTask}<bool> IsEntityExistsAsync(global::{TypeFullNames.Guid} id, global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} ct)"
@@ -59,7 +65,10 @@ public class EventEntryGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("    }");
     }
 
-    private void CreateDeleteMethod(ClassDeclarationSyntax @class, StringBuilder stringBuilder)
+    private void CreateDeleteMethod(
+        ClassDeclarationSyntax @class,
+        CSharpStringBuilder stringBuilder
+    )
     {
         stringBuilder.AppendLine(
             $"    public static void DeleteEntities(global::Microsoft.EntityFrameworkCore.DbContext context, string userId, params global::System.Guid[] ids)"
@@ -74,7 +83,10 @@ public class EventEntryGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("    }");
     }
 
-    private void CreateDeleteMethodA(ClassDeclarationSyntax @class, StringBuilder stringBuilder)
+    private void CreateDeleteMethodA(
+        ClassDeclarationSyntax @class,
+        CSharpStringBuilder stringBuilder
+    )
     {
         stringBuilder.AppendLine(
             $"    public static async global::{TypeFullNames.ValueTask} DeleteEntitiesAsync(global::{TypeFullNames.DbContext} context, string userId, global::{TypeFullNames.IEnumerable}<global::{TypeFullNames.Guid}> ids, global::{TypeFullNames.CancellationToken} ct)"
@@ -94,41 +106,54 @@ public class EventEntryGenerator : IIncrementalGenerator
         ClassDeclarationSyntax @class,
         Span<PropertyDeclarationSyntax> properties,
         Compilation compilation,
-        StringBuilder stringBuilder
+        CSharpStringBuilder stringBuilder
     )
     {
         stringBuilder.AppendLine(
             $"    public static global::{@class.GetFullName()}[] GetEntities(global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events)"
         );
 
-        stringBuilder.AppendLine("    {");
+        stringBuilder.AppendLine("{");
         stringBuilder.AppendLine(
-            "        var properties = events.Where(x => x.IsLast == true).GroupBy(x => x.EntityId).ToArray().ToDictionary(x => x.Key, x => x.ToDictionary(y => y.EntityProperty).ToFrozenDictionary()).ToFrozenDictionary();"
+            "var deletedIds = events.Where(x => x.IsLast == true && x.EntityProperty == \"__IS_DELETED__\" && x.EntityBooleanValue == true).Select(x => x.EntityId);"
         );
-
+        stringBuilder.AppendLine(
+            "var rawEntities = events.Where(x => x.IsLast == true && !deletedIds.Contains(x.EntityId)).GroupBy(x => x.EntityId).ToArray();"
+        );
+        stringBuilder.AppendLine(
+            $"var entities = new global::{@class.GetFullName()}[rawEntities.Length];"
+        );
+        stringBuilder.AppendLine("for (var index = 0; index < rawEntities.Length; index++)");
+        stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine("var rawEntity = rawEntities[index];");
+        stringBuilder.AppendLine(
+            $"var entity = new global::{@class.GetFullName()} {{ {idName} = rawEntity.Key }};"
+        );
+        stringBuilder.AppendLine("entities[index] = entity;");
         stringBuilder.AppendLine();
-
-        stringBuilder.AppendLine(
-            $"        return properties.Where(x => !x.Value.TryGetValue(\"__IS_DELETED__\", out var isDeleted) || isDeleted.EntityBooleanValue is false).Select(x => new global::{@class.GetFullName()}"
-        );
-
-        stringBuilder.AppendLine("        {");
-        stringBuilder.AppendLine($"             {idName} = x.Key,");
+        stringBuilder.AppendLine("foreach (var property in rawEntity)");
+        stringBuilder.AppendLine("switch (property.EntityProperty)");
+        stringBuilder.AppendLine("{");
 
         foreach (var property in properties)
         {
-            if (idName == property.GetName())
-            {
-                continue;
-            }
-
             stringBuilder.AppendLine(
-                $"             {property.GetName()} = (global::{property.Type.GetFullName(compilation)})x.Value[nameof({property.GetName()})].{GetEntityValueName(property, compilation)},"
+                $"case nameof(global::{@class.GetFullName()}.{property.GetName()}):"
             );
+            stringBuilder.AppendLine("{");
+            stringBuilder.AppendLine(
+                $"entity.{property.GetName()} = (global::{property.Type.GetFullName(compilation)})property.{GetEntityValueName(property, compilation)};"
+            );
+            stringBuilder.AppendLine();
+            stringBuilder.AppendLine("break;");
+            stringBuilder.AppendLine("}");
         }
 
-        stringBuilder.AppendLine("        }).ToArray();");
-        stringBuilder.AppendLine("    }");
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine("}");
+
+        stringBuilder.AppendLine("return entities;");
+        stringBuilder.AppendLine("}");
     }
 
     private void CreateGetMethodA(
@@ -136,41 +161,54 @@ public class EventEntryGenerator : IIncrementalGenerator
         ClassDeclarationSyntax @class,
         Span<PropertyDeclarationSyntax> properties,
         Compilation compilation,
-        StringBuilder stringBuilder
+        CSharpStringBuilder stringBuilder
     )
     {
         stringBuilder.AppendLine(
-            $"    public static async global::{TypeFullNames.ValueTask}<global::{@class.GetFullName()}[]> GetEntitiesAsync(global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} ct)"
+            $"public static async global::{TypeFullNames.ValueTask}<global::{@class.GetFullName()}[]> GetEntitiesAsync(global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} ct)"
         );
 
-        stringBuilder.AppendLine("    {");
+        stringBuilder.AppendLine("{");
         stringBuilder.AppendLine(
-            "        var properties = (await events.Where(x => x.IsLast == true).GroupBy(x => x.EntityId).ToArrayAsync(ct)).ToDictionary(x => x.Key, x => x.ToDictionary(y => y.EntityProperty).ToFrozenDictionary()).ToFrozenDictionary();"
+            "var deletedIds = events.Where(x => x.IsLast == true && x.EntityProperty == \"__IS_DELETED__\" && x.EntityBooleanValue == true).Select(x => x.EntityId);"
         );
-
+        stringBuilder.AppendLine(
+            "var rawEntities = await events.Where(x => x.IsLast == true && !deletedIds.Contains(x.EntityId)).GroupBy(x => x.EntityId).ToArrayAsync(ct);"
+        );
+        stringBuilder.AppendLine(
+            $"var entities = new global::{@class.GetFullName()}[rawEntities.Length];"
+        );
+        stringBuilder.AppendLine("for (var index = 0; index < rawEntities.Length; index++)");
+        stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine("var rawEntity = rawEntities[index];");
+        stringBuilder.AppendLine(
+            $"var entity = new global::{@class.GetFullName()} {{ {idName} = rawEntity.Key }};"
+        );
+        stringBuilder.AppendLine("entities[index] = entity;");
         stringBuilder.AppendLine();
-
-        stringBuilder.AppendLine(
-            $"        return properties.Where(x => !x.Value.TryGetValue(\"__IS_DELETED__\", out var isDeleted) || isDeleted.EntityBooleanValue is false).Select(x => new global::{@class.GetFullName()}"
-        );
-
-        stringBuilder.AppendLine("        {");
-        stringBuilder.AppendLine($"             {idName} = x.Key,");
+        stringBuilder.AppendLine("foreach (var property in rawEntity)");
+        stringBuilder.AppendLine("switch (property.EntityProperty)");
+        stringBuilder.AppendLine("{");
 
         foreach (var property in properties)
         {
-            if (idName == property.GetName())
-            {
-                continue;
-            }
-
             stringBuilder.AppendLine(
-                $"             {property.GetName()} = (global::{property.Type.GetFullName(compilation)})x.Value[nameof({property.GetName()})].{GetEntityValueName(property, compilation)},"
+                $"case nameof(global::{@class.GetFullName()}.{property.GetName()}):"
             );
+            stringBuilder.AppendLine("{");
+            stringBuilder.AppendLine(
+                $"entity.{property.GetName()} = (global::{property.Type.GetFullName(compilation)})property.{GetEntityValueName(property, compilation)};"
+            );
+            stringBuilder.AppendLine();
+            stringBuilder.AppendLine("break;");
+            stringBuilder.AppendLine("}");
         }
 
-        stringBuilder.AppendLine("        }).ToArray();");
-        stringBuilder.AppendLine("    }");
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine("}");
+
+        stringBuilder.AppendLine("return entities;");
+        stringBuilder.AppendLine("}");
     }
 
     private void CreateEditMethod(
@@ -178,7 +216,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         ClassDeclarationSyntax @class,
         Span<PropertyDeclarationSyntax> properties,
         Compilation compilation,
-        StringBuilder stringBuilder
+        CSharpStringBuilder stringBuilder
     )
     {
         stringBuilder.AppendLine(
@@ -231,7 +269,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         ClassDeclarationSyntax @class,
         Span<PropertyDeclarationSyntax> properties,
         Compilation compilation,
-        StringBuilder stringBuilder
+        CSharpStringBuilder stringBuilder
     )
     {
         stringBuilder.AppendLine(
@@ -279,158 +317,28 @@ public class EventEntryGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("    }");
     }
 
-    private void CreateFindMethod(
-        string idName,
-        ClassDeclarationSyntax @class,
-        Span<PropertyDeclarationSyntax> properties,
-        Compilation compilation,
-        StringBuilder stringBuilder
-    )
+    private void CreateFindMethod(ClassDeclarationSyntax @class, CSharpStringBuilder stringBuilder)
     {
         stringBuilder.AppendLine(
-            $"    public static global::{@class.GetFullName()}? FindEntity(global::{TypeFullNames.Guid} id, global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events)"
+            $"public static global::{@class.GetFullName()}? FindEntity(global::{TypeFullNames.Guid} id, global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events)"
         );
-
-        stringBuilder.AppendLine("    {");
-        var groupBys = new Span<string>(new string[properties.Length]);
-        var index = 0;
-
-        foreach (var property in properties)
-        {
-            if (idName == property.GetName())
-            {
-                continue;
-            }
-
-            var max =
-                $"events.Where(x => x.EntityId == id && x.EntityProperty == nameof({property.GetName()}) && x.EntityType == nameof(global::{@class.GetFullName()})).Max(x => x.Id)";
-
-            groupBys[index] = max;
-            index++;
-        }
-
-        groupBys[groupBys.Length - 1] =
-            $"events.Where(x => x.EntityId == id && x.EntityProperty == \"__IS_DELETED__\" && x.EntityType == nameof(global::{@class.GetFullName()})).Max(x => x.Id)";
-
+        stringBuilder.AppendLine("{");
         stringBuilder.AppendLine(
-            $"        var query = events.Where(y => y.Id == {string.Join(" || y.Id == ", groupBys.ToArray())});"
+            "return GetEntities(events.Where(x => x.EntityId == id)).FirstOrDefault();"
         );
-
-        stringBuilder.AppendLine(
-            "        var properties = query.ToArray().ToDictionary(x => x.EntityProperty).ToFrozenDictionary();"
-        );
-        stringBuilder.AppendLine();
-        stringBuilder.AppendLine("        if(properties.Count == 0)");
-        stringBuilder.AppendLine("        {");
-        stringBuilder.AppendLine("            return null;");
-        stringBuilder.AppendLine("        }");
-        stringBuilder.AppendLine();
-        stringBuilder.AppendLine();
-
-        stringBuilder.AppendLine(
-            "        if(properties.TryGetValue(\"__IS_DELETED__\", out var isDeleted) && isDeleted.EntityBooleanValue is true)"
-        );
-
-        stringBuilder.AppendLine("        {");
-        stringBuilder.AppendLine("            return null;");
-        stringBuilder.AppendLine("        }");
-        stringBuilder.AppendLine();
-        stringBuilder.AppendLine($"        return new global::{@class.GetFullName()}");
-        stringBuilder.AppendLine("        {");
-        stringBuilder.AppendLine($"             {idName} = id,");
-        var propertyIndex = 0;
-
-        foreach (var property in properties)
-        {
-            if (idName == property.GetName())
-            {
-                continue;
-            }
-
-            stringBuilder.AppendLine(
-                $"             {property.GetName()} = properties.TryGetValue(nameof({property.GetName()}), out var propertyValue{propertyIndex}) ? (global::{property.Type.GetFullName(compilation)})propertyValue{propertyIndex++}.{GetEntityValueName(property, compilation)} : default(global::{property.Type.GetFullName(compilation)}),"
-            );
-        }
-
-        stringBuilder.AppendLine("        };");
-        stringBuilder.AppendLine("    }");
+        stringBuilder.AppendLine("}");
     }
 
-    private void CreateFindMethodA(
-        string idName,
-        ClassDeclarationSyntax @class,
-        Span<PropertyDeclarationSyntax> properties,
-        Compilation compilation,
-        StringBuilder stringBuilder
-    )
+    private void CreateFindMethodA(ClassDeclarationSyntax @class, CSharpStringBuilder stringBuilder)
     {
         stringBuilder.AppendLine(
             $"    public static async {TypeFullNames.ValueTask}<global::{@class.GetFullName()}?> FindEntityAsync(global::{TypeFullNames.Guid} id, global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} ct)"
         );
-
-        stringBuilder.AppendLine("    {");
-        var groupBys = new Span<string>(new string[properties.Length]);
-        var index = 0;
-
-        foreach (var property in properties)
-        {
-            if (idName == property.GetName())
-            {
-                continue;
-            }
-
-            var max =
-                $"events.Where(x => x.EntityId == id && x.EntityProperty == nameof({property.GetName()}) && x.EntityType == nameof(global::{@class.GetFullName()})).Max(x => x.Id)";
-
-            groupBys[index] = max;
-            index++;
-        }
-
-        groupBys[groupBys.Length - 1] =
-            $"events.Where(x => x.EntityId == id && x.EntityProperty == \"__IS_DELETED__\" && x.EntityType == nameof(global::{@class.GetFullName()})).Max(x => x.Id)";
-
+        stringBuilder.AppendLine("{");
         stringBuilder.AppendLine(
-            $"        var query = events.Where(y => y.Id == {string.Join(" || y.Id == ", groupBys.ToArray())});"
+            "return (await GetEntitiesAsync(events.Where(x => x.EntityId == id), ct)).FirstOrDefault();"
         );
-
-        stringBuilder.AppendLine(
-            "        var properties = (await query.ToArrayAsync(ct)).ToDictionary(x => x.EntityProperty).ToFrozenDictionary();"
-        );
-        stringBuilder.AppendLine();
-        stringBuilder.AppendLine("        if(properties.Count == 0)");
-        stringBuilder.AppendLine("        {");
-        stringBuilder.AppendLine("            return null;");
-        stringBuilder.AppendLine("        }");
-        stringBuilder.AppendLine();
-        stringBuilder.AppendLine();
-
-        stringBuilder.AppendLine(
-            "        if(properties.TryGetValue(\"__IS_DELETED__\", out var isDeleted) && isDeleted.EntityBooleanValue is true)"
-        );
-
-        stringBuilder.AppendLine("        {");
-        stringBuilder.AppendLine("            return null;");
-        stringBuilder.AppendLine("        }");
-        stringBuilder.AppendLine();
-        stringBuilder.AppendLine($"        return new global::{@class.GetFullName()}");
-        stringBuilder.AppendLine("        {");
-        stringBuilder.AppendLine($"             {idName} = id,");
-        var propertyIndex = 0;
-
-        foreach (var property in properties)
-        {
-            if (idName == property.GetName())
-            {
-                continue;
-            }
-
-            stringBuilder.AppendLine(
-                $"             {property.GetName()} = properties.TryGetValue(nameof({property.GetName()}), out var propertyValue{propertyIndex}) ? (global::{property.Type.GetFullName(compilation)})propertyValue{propertyIndex++}.{GetEntityValueName(property, compilation)} : default(global::{property.Type.GetFullName(compilation)}),"
-            );
-        }
-
-        stringBuilder.AppendLine("        };");
-        stringBuilder.AppendLine("    }");
+        stringBuilder.AppendLine("}");
     }
 
     private void CreateAddMethod(
@@ -438,7 +346,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         ClassDeclarationSyntax @class,
         Span<PropertyDeclarationSyntax> properties,
         Compilation compilation,
-        StringBuilder stringBuilder
+        CSharpStringBuilder stringBuilder
     )
     {
         stringBuilder.AppendLine(
@@ -495,7 +403,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         ClassDeclarationSyntax @class,
         Span<PropertyDeclarationSyntax> properties,
         Compilation compilation,
-        StringBuilder stringBuilder
+        CSharpStringBuilder stringBuilder
     )
     {
         stringBuilder.AppendLine(
@@ -552,7 +460,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         ClassDeclarationSyntax @class,
         Span<PropertyDeclarationSyntax> properties,
         Compilation compilation,
-        StringBuilder stringBuilder
+        CSharpStringBuilder stringBuilder
     )
     {
         stringBuilder.AppendLine($"public class Edit{@class.GetName()}");
@@ -664,7 +572,7 @@ public class EventEntryGenerator : IIncrementalGenerator
 
                     foreach (var source in list)
                     {
-                        var stringBuilder = new StringBuilder();
+                        var stringBuilder = new CSharpStringBuilder(4);
                         var properties = source
                             .Members.OfType<PropertyDeclarationSyntax>()
                             .ToArray()
@@ -696,9 +604,9 @@ public class EventEntryGenerator : IIncrementalGenerator
                         stringBuilder.AppendLine();
                         CreateAddMethodA(idName, source, properties, compilation, stringBuilder);
                         stringBuilder.AppendLine();
-                        CreateFindMethod(idName, source, properties, compilation, stringBuilder);
+                        CreateFindMethod(source, stringBuilder);
                         stringBuilder.AppendLine();
-                        CreateFindMethodA(idName, source, properties, compilation, stringBuilder);
+                        CreateFindMethodA(source, stringBuilder);
                         stringBuilder.AppendLine();
                         CreateGetMethod(idName, source, properties, compilation, stringBuilder);
                         stringBuilder.AppendLine();
