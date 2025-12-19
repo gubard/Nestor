@@ -206,7 +206,7 @@ public class EventEntryGenerator : IIncrementalGenerator
             stringBuilder.AppendLine($"            if(edit.IsEdit{property.GetName()})");
             stringBuilder.AppendLine("            {");
             stringBuilder.AppendLine(
-                $"            query = query.Concat(query.Where(x => x.IsLast == true && x.EntityId == edit.{idName} && x.EntityProperty == nameof({property.GetName()}) && x.EntityType == nameof(global::{@class.GetFullName()})));"
+                $"            query = query.Concat(context.Set<global::{TypeFullNames.EventEntity}>().Where(x => x.IsLast == true && x.EntityId == edit.{idName} && x.EntityProperty == nameof({property.GetName()}) && x.EntityType == nameof(global::{@class.GetFullName()})));"
             );
             stringBuilder.AppendLine(
                 $"                events.Add(new global::{TypeFullNames.EventEntity} {{ EntityId = edit.{idName}, IsLast = true, EntityType = nameof(global::{@class.GetFullName()}), EntityProperty = nameof({property.GetName()}), {GetEntityValueName(property, compilation)} = ({GetEntityTypeName(property.Type, compilation)})edit.{property.GetName()}, UserId = userId}});"
@@ -259,7 +259,7 @@ public class EventEntryGenerator : IIncrementalGenerator
             stringBuilder.AppendLine($"            if(edit.IsEdit{property.GetName()})");
             stringBuilder.AppendLine("            {");
             stringBuilder.AppendLine(
-                $"            query = query.Concat(query.Where(x => x.IsLast == true && x.EntityId == edit.{idName} && x.EntityProperty == nameof({property.GetName()}) && x.EntityType == nameof(global::{@class.GetFullName()})));"
+                $"            query = query.Concat(context.Set<global::{TypeFullNames.EventEntity}>().Where(x => x.IsLast == true && x.EntityId == edit.{idName} && x.EntityProperty == nameof({property.GetName()}) && x.EntityType == nameof(global::{@class.GetFullName()})));"
             );
             stringBuilder.AppendLine(
                 $"                events.Add(new global::{TypeFullNames.EventEntity} {{ EntityId = edit.{idName}, IsLast = true, EntityType = nameof(global::{@class.GetFullName()}), EntityProperty = nameof({property.GetName()}), {GetEntityValueName(property, compilation)} = ({GetEntityTypeName(property.Type, compilation)})edit.{property.GetName()}, UserId = userId}});"
@@ -637,21 +637,6 @@ public class EventEntryGenerator : IIncrementalGenerator
     private string GetEntityTypeName(INamedTypeSymbol named)
     {
         return named.Name;
-    }
-
-    private string Concat(Span<string> groupBys)
-    {
-        if (groupBys.Length == 0)
-        {
-            return "";
-        }
-
-        if (groupBys.Length == 1)
-        {
-            return groupBys[0];
-        }
-
-        return $"{groupBys[0]}.Concat({Concat(groupBys.Slice(1))})";
     }
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
