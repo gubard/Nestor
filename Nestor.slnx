@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="Nestor.Db.Sqlite/Nestor.Db.Sqlite.csproj" />
+  <Project Path="Nestor.Db.SqliteWasm/Nestor.Db.SqliteWasm.csproj" />
   <Project Path="Nestor.Db/Nestor.Db.csproj" />
   <Project Path="Nestor.ServerExample/Nestor.ServerExample.csproj" />
   <Project Path="Nestor.SharedExample/Nestor.SharedExample.csproj" />
