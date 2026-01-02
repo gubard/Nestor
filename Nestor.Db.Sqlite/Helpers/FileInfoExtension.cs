@@ -16,7 +16,7 @@ public static class FileInfoExtension
 
         var context = new SqliteNestorDbContext(options);
         var migrationFile = file.FileInSameDir($"{file.GetFileNameWithoutExtension()}.migration");
-        var lastMigration = "20251217141859_AddIsLast";
+        var lastMigration = context.Database.GetMigrations().Last();
 
         if (!file.Exists)
         {
