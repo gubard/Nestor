@@ -7,13 +7,8 @@ public static class FileInfoExtension
 {
     public static SqliteNestorDbContext InitDbContext(this FileInfo file)
     {
-        Console.WriteLine($"Init db context for file: \"{file.FullName}\"");
-
         var options = new DbContextOptionsBuilder<SqliteNestorDbContext>()
-            .UseSqlite(
-                $"Data Source={file}",
-                x => x.MigrationsAssembly(typeof(SqliteNestorDbContext).Assembly)
-            )
+            .UseSqlite($"Data Source={file}")
             .Options;
 
         var context = new SqliteNestorDbContext(options);

@@ -11,17 +11,17 @@ namespace Nestor.Db.Sqlite.CompiledModels
     public partial class SqliteNestorDbContextModel
     {
         private SqliteNestorDbContextModel()
-            : base(skipDetectChanges: false, modelId: new Guid("62e2e504-f0e2-4454-9db0-3980e83ef556"), entityTypeCount: 2)
+            : base(skipDetectChanges: false, modelId: new Guid("672d5560-ef49-4758-b8bd-400488368d1c"), entityTypeCount: 2)
         {
         }
 
         partial void Initialize()
         {
             var eventEntity = EventEntityEntityType.Create(this);
-            var tempEntity = TempEntityEntityType.Create(this);
+            var migrationEntity = MigrationEntityEntityType.Create(this);
 
             EventEntityEntityType.CreateAnnotations(eventEntity);
-            TempEntityEntityType.CreateAnnotations(tempEntity);
+            MigrationEntityEntityType.CreateAnnotations(migrationEntity);
 
             AddAnnotation("ProductVersion", "10.0.1");
         }

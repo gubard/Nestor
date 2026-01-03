@@ -4,7 +4,7 @@ using Nestor.Db.Sqlite.CompiledModels;
 
 namespace Nestor.Db.Sqlite;
 
-public sealed class SqliteNestorDbContext : NestorDbContext<EventEntityTypeConfiguration>
+public sealed class SqliteNestorDbContext : NestorDbContext
 {
     public SqliteNestorDbContext() { }
 

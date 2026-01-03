@@ -3,8 +3,7 @@ using Nestor.Db.Models;
 
 namespace Nestor.Db.Services;
 
-public abstract class NestorDbContext<TConfiguration> : DbContext
-    where TConfiguration : IEntityTypeConfiguration<EventEntity>, new()
+public abstract class NestorDbContext : DbContext
 {
     protected NestorDbContext() { }
 
@@ -13,8 +12,8 @@ public abstract class NestorDbContext<TConfiguration> : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfiguration(new TConfiguration());
-        modelBuilder.ApplyConfiguration(new TempEntityTypeConfiguration());
+        modelBuilder.ApplyConfiguration(new EventEntityTypeConfiguration());
+        modelBuilder.ApplyConfiguration(new MigrationEntityTypeConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 }

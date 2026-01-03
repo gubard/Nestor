@@ -2,9 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Nestor.Db.Models;
 
-namespace Nestor.Db.Sqlite;
+namespace Nestor.Db.Services;
 
-public class EventEntityTypeConfiguration : IEntityTypeConfiguration<EventEntity>
+public sealed class EventEntityTypeConfiguration : IEntityTypeConfiguration<EventEntity>
 {
     public void Configure(EntityTypeBuilder<EventEntity> builder)
     {

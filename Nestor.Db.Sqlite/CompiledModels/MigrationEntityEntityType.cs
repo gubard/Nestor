@@ -11,28 +11,34 @@ using Nestor.Db.Models;
 namespace Nestor.Db.Sqlite.CompiledModels
 {
     [EntityFrameworkInternal]
-    public partial class TempEntityEntityType
+    public partial class MigrationEntityEntityType
     {
         public static RuntimeEntityType Create(RuntimeModel model, RuntimeEntityType baseEntityType = null)
         {
             var runtimeEntityType = model.AddEntityType(
-                "Nestor.Db.Models.TempEntity",
-                typeof(TempEntity),
+                "Nestor.Db.Models.MigrationEntity",
+                typeof(MigrationEntity),
                 baseEntityType,
-                propertyCount: 1,
+                propertyCount: 2,
                 keyCount: 1);
 
-            var entityId = runtimeEntityType.AddProperty(
-                "EntityId",
-                typeof(Guid),
-                propertyInfo: typeof(TempEntity).GetProperty("EntityId", BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly),
-                fieldInfo: typeof(TempEntity).GetField("<EntityId>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly),
+            var id = runtimeEntityType.AddProperty(
+                "Id",
+                typeof(long),
+                propertyInfo: typeof(MigrationEntity).GetProperty("Id", BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly),
+                fieldInfo: typeof(MigrationEntity).GetField("<Id>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly),
                 valueGenerated: ValueGenerated.OnAdd,
                 afterSaveBehavior: PropertySaveBehavior.Throw,
-                sentinel: new Guid("00000000-0000-0000-0000-000000000000"));
+                sentinel: 0L);
+
+            var sql = runtimeEntityType.AddProperty(
+                "Sql",
+                typeof(string),
+                propertyInfo: typeof(MigrationEntity).GetProperty("Sql", BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly),
+                fieldInfo: typeof(MigrationEntity).GetField("<Sql>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly));
 
             var key = runtimeEntityType.AddKey(
-                new[] { entityId });
+                new[] { id });
             runtimeEntityType.SetPrimaryKey(key);
 
             return runtimeEntityType;
@@ -43,7 +49,7 @@ namespace Nestor.Db.Sqlite.CompiledModels
             runtimeEntityType.AddAnnotation("Relational:FunctionName", null);
             runtimeEntityType.AddAnnotation("Relational:Schema", null);
             runtimeEntityType.AddAnnotation("Relational:SqlQuery", null);
-            runtimeEntityType.AddAnnotation("Relational:TableName", "TempEntity");
+            runtimeEntityType.AddAnnotation("Relational:TableName", "MigrationEntity");
             runtimeEntityType.AddAnnotation("Relational:ViewName", null);
             runtimeEntityType.AddAnnotation("Relational:ViewSchema", null);
 
