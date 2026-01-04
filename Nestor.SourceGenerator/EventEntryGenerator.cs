@@ -70,7 +70,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static void DeleteEntities(global::Microsoft.EntityFrameworkCore.DbContext context, string userId, params global::System.Guid[] ids)"
+            $"    public static void DeleteEntities(global::{TypeFullNames.NestorDbContext} context, string userId, params global::System.Guid[] ids)"
         );
 
         stringBuilder.AppendLine("    {");
@@ -88,7 +88,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static async global::{TypeFullNames.ValueTask} DeleteEntitiesAsync(global::{TypeFullNames.DbContext} context, string userId, global::{TypeFullNames.IEnumerable}<global::{TypeFullNames.Guid}> ids, global::{TypeFullNames.CancellationToken} ct)"
+            $"    public static async global::{TypeFullNames.ValueTask} DeleteEntitiesAsync(global::{TypeFullNames.NestorDbContext} context, string userId, global::{TypeFullNames.IEnumerable}<global::{TypeFullNames.Guid}> ids, global::{TypeFullNames.CancellationToken} ct)"
         );
 
         stringBuilder.AppendLine("    {");
@@ -219,14 +219,12 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static void EditEntities(global::{TypeFullNames.DbContext} context, string userId, global::{@class.GetNamespace()}.Edit{@class.GetName()}[] edits)"
+            $"    public static void EditEntities(global::{TypeFullNames.NestorDbContext} context, string userId, global::{@class.GetNamespace()}.Edit{@class.GetName()}[] edits)"
         );
 
         stringBuilder.AppendLine("    {");
         stringBuilder.AppendLine("    if(edits.Length == 0) { return; }");
-        stringBuilder.AppendLine(
-            $"    var query = context.Set<global::{TypeFullNames.EventEntity}>().Where(x => x.Id == -1);"
-        );
+        stringBuilder.AppendLine("    var query = context.Events.Where(x => x.Id == -1);");
         stringBuilder.AppendLine(
             $"        var events = new global::{TypeFullNames.List}<global::{TypeFullNames.EventEntity}>();"
         );
@@ -243,7 +241,7 @@ public class EventEntryGenerator : IIncrementalGenerator
             stringBuilder.AppendLine($"            if(edit.IsEdit{property.GetName()})");
             stringBuilder.AppendLine("            {");
             stringBuilder.AppendLine(
-                $"            query = query.Concat(context.Set<global::{TypeFullNames.EventEntity}>().Where(x => x.IsLast == true && x.EntityId == edit.{idName} && x.EntityProperty == nameof({property.GetName()}) && x.EntityType == nameof(global::{@class.GetFullName()})));"
+                $"            query = query.Concat(context.Events.Where(x => x.IsLast == true && x.EntityId == edit.{idName} && x.EntityProperty == nameof({property.GetName()}) && x.EntityType == nameof(global::{@class.GetFullName()})));"
             );
             stringBuilder.AppendLine(
                 $"                events.Add(new global::{TypeFullNames.EventEntity} {{ EntityId = edit.{idName}, IsLast = true, EntityType = nameof(global::{@class.GetFullName()}), EntityProperty = nameof({property.GetName()}), {GetEntityValueName(property, compilation)} = ({GetEntityTypeName(property.Type, compilation)})edit.{property.GetName()}, UserId = userId}});"
@@ -272,14 +270,12 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static async global::{TypeFullNames.ValueTask} EditEntitiesAsync(global::{TypeFullNames.DbContext} context, string userId, global::{@class.GetNamespace()}.Edit{@class.GetName()}[] edits, global::{TypeFullNames.CancellationToken} ct)"
+            $"    public static async global::{TypeFullNames.ValueTask} EditEntitiesAsync(global::{TypeFullNames.NestorDbContext} context, string userId, global::{@class.GetNamespace()}.Edit{@class.GetName()}[] edits, global::{TypeFullNames.CancellationToken} ct)"
         );
 
         stringBuilder.AppendLine("    {");
         stringBuilder.AppendLine("    if(edits.Length == 0) { return; }");
-        stringBuilder.AppendLine(
-            $"    var query = context.Set<global::{TypeFullNames.EventEntity}>().Where(x => x.Id == -1);"
-        );
+        stringBuilder.AppendLine("    var query = context.Events.Where(x => x.Id == -1);");
         stringBuilder.AppendLine(
             $"        var events = new global::{TypeFullNames.List}<global::{TypeFullNames.EventEntity}>();"
         );
@@ -296,7 +292,7 @@ public class EventEntryGenerator : IIncrementalGenerator
             stringBuilder.AppendLine($"            if(edit.IsEdit{property.GetName()})");
             stringBuilder.AppendLine("            {");
             stringBuilder.AppendLine(
-                $"            query = query.Concat(context.Set<global::{TypeFullNames.EventEntity}>().Where(x => x.IsLast == true && x.EntityId == edit.{idName} && x.EntityProperty == nameof({property.GetName()}) && x.EntityType == nameof(global::{@class.GetFullName()})));"
+                $"            query = query.Concat(context.Events.Where(x => x.IsLast == true && x.EntityId == edit.{idName} && x.EntityProperty == nameof({property.GetName()}) && x.EntityType == nameof(global::{@class.GetFullName()})));"
             );
             stringBuilder.AppendLine(
                 $"                events.Add(new global::{TypeFullNames.EventEntity} {{ EntityId = edit.{idName}, IsLast = true, EntityType = nameof(global::{@class.GetFullName()}), EntityProperty = nameof({property.GetName()}), {GetEntityValueName(property, compilation)} = ({GetEntityTypeName(property.Type, compilation)})edit.{property.GetName()}, UserId = userId}});"
@@ -349,13 +345,13 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static void AddEntities(global::Microsoft.EntityFrameworkCore.DbContext context, string userId, params global::{@class.GetFullName()}[] items)"
+            $"    public static void AddEntities(global::{TypeFullNames.NestorDbContext} context, string userId, params global::{@class.GetFullName()}[] items)"
         );
 
         stringBuilder.AppendLine("    {");
 
         stringBuilder.AppendLine(
-            $"        var events = new global::System.Collections.Generic.List<global::{TypeFullNames.EventEntity}>();"
+            $"        var events = new {TypeFullNames.List}<global::{TypeFullNames.EventEntity}>();"
         );
 
         stringBuilder.AppendLine();
@@ -406,7 +402,7 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static async {TypeFullNames.ValueTask} AddEntitiesAsync(global::{TypeFullNames.DbContext} context, string userId, global::{TypeFullNames.IEnumerable}<global::{@class.GetFullName()}> items, global::{TypeFullNames.CancellationToken} ct)"
+            $"    public static async {TypeFullNames.ValueTask} AddEntitiesAsync(global::{TypeFullNames.NestorDbContext} context, string userId, global::{TypeFullNames.IEnumerable}<global::{@class.GetFullName()}> items, global::{TypeFullNames.CancellationToken} ct)"
         );
 
         stringBuilder.AppendLine("    {");

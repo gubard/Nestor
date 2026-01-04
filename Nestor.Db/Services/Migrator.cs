@@ -6,14 +6,13 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
-using Nestor.Db.Models;
 
 namespace Nestor.Db.Services;
 
 public interface IMigrator
 {
-    void Migrate(DbContext dbContext);
-    ValueTask MigrateAsync(DbContext dbContext, CancellationToken ct);
+    void Migrate(NestorDbContext dbContext);
+    ValueTask MigrateAsync(NestorDbContext dbContext, CancellationToken ct);
 }
 
 public sealed class Migrator : IMigrator
@@ -25,13 +24,13 @@ public sealed class Migrator : IMigrator
         _migrations = migrations;
     }
 
-    public void Migrate(DbContext dbContext)
+    public void Migrate(NestorDbContext dbContext)
     {
         var databaseCreator = dbContext.GetService<IRelationalDatabaseCreator>();
 
         if (databaseCreator.Exists())
         {
-            var migrationCount = dbContext.Set<MigrationEntity>().ToArray().Length;
+            var migrationCount = dbContext.Migrations.ToArray().Length;
 
             if (migrationCount == _migrations.Count)
             {
@@ -48,9 +47,8 @@ public sealed class Migrator : IMigrator
             {
                 dbContext.Database.ExecuteSqlRaw(migration.Value);
 
-                dbContext
-                    .Set<MigrationEntity>()
-                    .Add(new() { Id = migration.Key, Sql = migration.Value });
+                dbContext.Migrations.Add(new() { Id = migration.Key, Sql = migration.Value });
+                dbContext.Migrations.Add(new() { Id = migration.Key, Sql = migration.Value });
             }
 
             dbContext.SaveChanges();
@@ -62,22 +60,20 @@ public sealed class Migrator : IMigrator
             foreach (var migration in migrations)
             {
                 dbContext.Database.ExecuteSqlRaw(migration.Value);
-                dbContext
-                    .Set<MigrationEntity>()
-                    .Add(new() { Id = migration.Key, Sql = migration.Value });
+                dbContext.Migrations.Add(new() { Id = migration.Key, Sql = migration.Value });
             }
 
             dbContext.SaveChanges();
         }
     }
 
-    public async ValueTask MigrateAsync(DbContext dbContext, CancellationToken ct)
+    public async ValueTask MigrateAsync(NestorDbContext dbContext, CancellationToken ct)
     {
         var databaseCreator = dbContext.GetService<IRelationalDatabaseCreator>();
 
         if (await databaseCreator.ExistsAsync(ct))
         {
-            var migrationCount = (await dbContext.Set<MigrationEntity>().ToArrayAsync(ct)).Length;
+            var migrationCount = (await dbContext.Migrations.ToArrayAsync(ct)).Length;
 
             if (migrationCount == _migrations.Count)
             {
@@ -95,9 +91,7 @@ public sealed class Migrator : IMigrator
             {
                 await dbContext.Database.ExecuteSqlRawAsync(migration.Value, ct);
 
-                dbContext
-                    .Set<MigrationEntity>()
-                    .Add(new() { Id = migration.Key, Sql = migration.Value });
+                dbContext.Migrations.Add(new() { Id = migration.Key, Sql = migration.Value });
             }
 
             await dbContext.SaveChangesAsync(ct);
@@ -110,9 +104,7 @@ public sealed class Migrator : IMigrator
             {
                 await dbContext.Database.ExecuteSqlRawAsync(migration.Value, ct);
 
-                dbContext
-                    .Set<MigrationEntity>()
-                    .Add(new() { Id = migration.Key, Sql = migration.Value });
+                dbContext.Migrations.Add(new() { Id = migration.Key, Sql = migration.Value });
             }
 
             await dbContext.SaveChangesAsync(ct);

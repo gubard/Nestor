@@ -11,7 +11,7 @@ public abstract class NestorDbContext : DbContext
         : base(options) { }
 
     public DbSet<EventEntity> Events { get; set; }
-    public DbSet<EventEntity> Migrations { get; set; }
+    public DbSet<MigrationEntity> Migrations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

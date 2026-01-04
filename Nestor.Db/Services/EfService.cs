@@ -25,9 +25,9 @@ public abstract class EfService<TGetRequest, TPostRequest, TGetResponse, TPostRe
     where TGetResponse : IValidationErrors, new()
     where TPostResponse : IValidationErrors, new()
 {
-    protected readonly DbContext DbContext;
+    protected readonly NestorDbContext DbContext;
 
-    protected EfService(DbContext dbContext)
+    protected EfService(NestorDbContext dbContext)
     {
         DbContext = dbContext;
     }
@@ -63,7 +63,7 @@ public abstract class EfService<TGetRequest, TPostRequest, TGetResponse, TPostRe
 
     public async ValueTask<long> GetLastIdAsync(CancellationToken ct)
     {
-        var lastId = await DbContext.Set<EventEntity>().MaxAsync(x => (long?)x.Id, ct);
+        var lastId = await DbContext.Events.MaxAsync(x => (long?)x.Id, ct);
 
         if (lastId is null)
         {
@@ -75,7 +75,7 @@ public abstract class EfService<TGetRequest, TPostRequest, TGetResponse, TPostRe
 
     public long GetLastId()
     {
-        var lastId = DbContext.Set<EventEntity>().Max(x => (long?)x.Id);
+        var lastId = DbContext.Events.Max(x => (long?)x.Id);
 
         if (lastId is null)
         {
