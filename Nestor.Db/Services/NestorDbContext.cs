@@ -11,8 +11,8 @@ public abstract class NestorDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfiguration(new EventEntityTypeConfiguration());
         modelBuilder.ApplyConfiguration(new MigrationEntityTypeConfiguration());
-        base.OnModelCreating(modelBuilder);
     }
 }
