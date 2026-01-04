@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Gaia.Services;
@@ -13,10 +14,13 @@ public interface IEfService<in TGetRequest, in TPostRequest, TGetResponse, TPost
     where TGetResponse : IValidationErrors, new()
     where TPostResponse : IValidationErrors, new()
 {
-    ValueTask SaveEventsAsync(ReadOnlyMemory<EventEntity> events, CancellationToken ct);
+    ConfiguredValueTaskAwaitable SaveEventsAsync(
+        ReadOnlyMemory<EventEntity> events,
+        CancellationToken ct
+    );
 
     void SaveEvents(ReadOnlyMemory<EventEntity> events);
-    ValueTask<long> GetLastIdAsync(CancellationToken ct);
+    ConfiguredValueTaskAwaitable<long> GetLastIdAsync(CancellationToken ct);
     long GetLastId();
 }
 
@@ -32,14 +36,28 @@ public abstract class EfService<TGetRequest, TPostRequest, TGetResponse, TPostRe
         DbContext = dbContext;
     }
 
-    public abstract ValueTask<TGetResponse> GetAsync(TGetRequest request, CancellationToken ct);
+    public abstract ConfiguredValueTaskAwaitable<TGetResponse> GetAsync(
+        TGetRequest request,
+        CancellationToken ct
+    );
 
-    public abstract ValueTask<TPostResponse> PostAsync(TPostRequest request, CancellationToken ct);
+    public abstract ConfiguredValueTaskAwaitable<TPostResponse> PostAsync(
+        TPostRequest request,
+        CancellationToken ct
+    );
 
     public abstract TPostResponse Post(TPostRequest request);
     public abstract TGetResponse Get(TGetRequest request);
 
-    public async ValueTask SaveEventsAsync(ReadOnlyMemory<EventEntity> events, CancellationToken ct)
+    public ConfiguredValueTaskAwaitable SaveEventsAsync(
+        ReadOnlyMemory<EventEntity> events,
+        CancellationToken ct
+    )
+    {
+        return SaveEventsCore(events, ct).ConfigureAwait(false);
+    }
+
+    private async ValueTask SaveEventsCore(ReadOnlyMemory<EventEntity> events, CancellationToken ct)
     {
         if (events.IsEmpty)
         {
@@ -61,7 +79,12 @@ public abstract class EfService<TGetRequest, TPostRequest, TGetResponse, TPostRe
         DbContext.SaveChanges();
     }
 
-    public async ValueTask<long> GetLastIdAsync(CancellationToken ct)
+    public ConfiguredValueTaskAwaitable<long> GetLastIdAsync(CancellationToken ct)
+    {
+        return GetLastIdCore(ct).ConfigureAwait(false);
+    }
+
+    private async ValueTask<long> GetLastIdCore(CancellationToken ct)
     {
         var lastId = await DbContext.Events.MaxAsync(x => (long?)x.Id, ct);
 

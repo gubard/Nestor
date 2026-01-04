@@ -41,20 +41,33 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static async global::{TypeFullNames.ValueTask}<bool> IsEntityExistsAsync(global::{TypeFullNames.Guid} id, global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} ct)"
+            $"public static global::{TypeFullNames.ConfiguredValueTaskAwaitable}<bool> IsEntityExistsAsync(global::{TypeFullNames.Guid} id, global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} ct)"
         );
 
-        stringBuilder.AppendLine("    {");
+        stringBuilder.AppendLine("{");
 
         stringBuilder.AppendLine(
-            $"        var isDeleted = await events.FirstOrDefaultAsync(x => x.EntityId == id && x.EntityType == nameof(global::{@class.GetFullName()}) && x.EntityProperty == \"__IS_DELETED__\", ct);"
+            "return IsEntityExistsCore(id, events, ct).ConfigureAwait(false);"
+        );
+
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine();
+
+        stringBuilder.AppendLine(
+            $"private static async global::{TypeFullNames.ValueTask}<bool> IsEntityExistsCore(global::{TypeFullNames.Guid} id, global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} ct)"
+        );
+
+        stringBuilder.AppendLine("{");
+
+        stringBuilder.AppendLine(
+            $"var isDeleted = await events.FirstOrDefaultAsync(x => x.EntityId == id && x.EntityType == nameof(global::{@class.GetFullName()}) && x.EntityProperty == \"__IS_DELETED__\", ct);"
         );
 
         stringBuilder.AppendLine();
-        stringBuilder.AppendLine("        if(isDeleted is not null)");
-        stringBuilder.AppendLine("        {");
-        stringBuilder.AppendLine("            return isDeleted.EntityBooleanValue is false;");
-        stringBuilder.AppendLine("        }");
+        stringBuilder.AppendLine("if(isDeleted is not null)");
+        stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine("return isDeleted.EntityBooleanValue is false;");
+        stringBuilder.AppendLine("}");
         stringBuilder.AppendLine();
 
         stringBuilder.AppendLine(
@@ -88,7 +101,20 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static async global::{TypeFullNames.ValueTask} DeleteEntitiesAsync(global::{TypeFullNames.NestorDbContext} context, string userId, global::{TypeFullNames.IEnumerable}<global::{TypeFullNames.Guid}> ids, global::{TypeFullNames.CancellationToken} ct)"
+            $"public static global::{TypeFullNames.ConfiguredValueTaskAwaitable} DeleteEntitiesAsync(global::{TypeFullNames.NestorDbContext} context, string userId, global::{TypeFullNames.IEnumerable}<global::{TypeFullNames.Guid}> ids, global::{TypeFullNames.CancellationToken} ct)"
+        );
+
+        stringBuilder.AppendLine("{");
+
+        stringBuilder.AppendLine(
+            "return DeleteEntitiesCore(context, userId, ids, ct).ConfigureAwait(false);"
+        );
+
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine();
+
+        stringBuilder.AppendLine(
+            $"public static async global::{TypeFullNames.ValueTask} DeleteEntitiesCore(global::{TypeFullNames.NestorDbContext} context, string userId, global::{TypeFullNames.IEnumerable}<global::{TypeFullNames.Guid}> ids, global::{TypeFullNames.CancellationToken} ct)"
         );
 
         stringBuilder.AppendLine("    {");
@@ -164,7 +190,16 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"public static async global::{TypeFullNames.ValueTask}<global::{@class.GetFullName()}[]> GetEntitiesAsync(global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} ct)"
+            $"public static global::{TypeFullNames.ConfiguredValueTaskAwaitable}<global::{@class.GetFullName()}[]> GetEntitiesAsync(global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} ct)"
+        );
+
+        stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine("return GetEntitiesCore(events, ct).ConfigureAwait(false);");
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine();
+
+        stringBuilder.AppendLine(
+            $"public static async global::{TypeFullNames.ValueTask}<global::{@class.GetFullName()}[]> GetEntitiesCore(global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} ct)"
         );
 
         stringBuilder.AppendLine("{");
@@ -270,7 +305,18 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static async global::{TypeFullNames.ValueTask} EditEntitiesAsync(global::{TypeFullNames.NestorDbContext} context, string userId, global::{@class.GetNamespace()}.Edit{@class.GetName()}[] edits, global::{TypeFullNames.CancellationToken} ct)"
+            $"public static global::{TypeFullNames.ConfiguredValueTaskAwaitable} EditEntitiesAsync(global::{TypeFullNames.NestorDbContext} context, string userId, global::{@class.GetNamespace()}.Edit{@class.GetName()}[] edits, global::{TypeFullNames.CancellationToken} ct)"
+        );
+
+        stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine(
+            "return EditEntitiesCore(context, userId, edits, ct).ConfigureAwait(false);"
+        );
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine();
+
+        stringBuilder.AppendLine(
+            $"public static async global::{TypeFullNames.ValueTask} EditEntitiesCore(global::{TypeFullNames.NestorDbContext} context, string userId, global::{@class.GetNamespace()}.Edit{@class.GetName()}[] edits, global::{TypeFullNames.CancellationToken} ct)"
         );
 
         stringBuilder.AppendLine("    {");
@@ -327,7 +373,16 @@ public class EventEntryGenerator : IIncrementalGenerator
     private void CreateFindMethodA(ClassDeclarationSyntax @class, CSharpStringBuilder stringBuilder)
     {
         stringBuilder.AppendLine(
-            $"    public static async {TypeFullNames.ValueTask}<global::{@class.GetFullName()}?> FindEntityAsync(global::{TypeFullNames.Guid} id, global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} ct)"
+            $"public static {TypeFullNames.ConfiguredValueTaskAwaitable}<global::{@class.GetFullName()}?> FindEntityAsync(global::{TypeFullNames.Guid} id, global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} ct)"
+        );
+
+        stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine("return FindEntityCore(id, events, ct).ConfigureAwait(false);");
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine();
+
+        stringBuilder.AppendLine(
+            $"public static async {TypeFullNames.ValueTask}<global::{@class.GetFullName()}?> FindEntityCore(global::{TypeFullNames.Guid} id, global::{TypeFullNames.IQueryable}<global::{TypeFullNames.EventEntity}> events, global::{TypeFullNames.CancellationToken} ct)"
         );
         stringBuilder.AppendLine("{");
         stringBuilder.AppendLine(
@@ -402,7 +457,20 @@ public class EventEntryGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"    public static async {TypeFullNames.ValueTask} AddEntitiesAsync(global::{TypeFullNames.NestorDbContext} context, string userId, global::{TypeFullNames.IEnumerable}<global::{@class.GetFullName()}> items, global::{TypeFullNames.CancellationToken} ct)"
+            $"public static {TypeFullNames.ConfiguredValueTaskAwaitable} AddEntitiesAsync(global::{TypeFullNames.NestorDbContext} context, string userId, global::{TypeFullNames.IEnumerable}<global::{@class.GetFullName()}> items, global::{TypeFullNames.CancellationToken} ct)"
+        );
+
+        stringBuilder.AppendLine("{");
+
+        stringBuilder.AppendLine(
+            "return AddEntitiesCore(context, userId, items, ct).ConfigureAwait(false);"
+        );
+
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine();
+
+        stringBuilder.AppendLine(
+            $"public static async {TypeFullNames.ValueTask} AddEntitiesCore(global::{TypeFullNames.NestorDbContext} context, string userId, global::{TypeFullNames.IEnumerable}<global::{@class.GetFullName()}> items, global::{TypeFullNames.CancellationToken} ct)"
         );
 
         stringBuilder.AppendLine("    {");

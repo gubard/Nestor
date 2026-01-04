@@ -2,6 +2,9 @@ namespace Nestor.SourceGenerator;
 
 public static class TypeFullNames
 {
+    public const string ConfiguredValueTaskAwaitable =
+        "System.Runtime.CompilerServices.ConfiguredValueTaskAwaitable";
+
     public const string CancellationToken = "System.Threading.CancellationToken";
     public const string DbContext = "Microsoft.EntityFrameworkCore.DbContext";
     public const string NestorDbContext = "Nestor.Db.Services.NestorDbContext";

@@ -16,15 +16,17 @@ public class CSharpStringBuilder
     public void AppendLine(string line)
     {
         var normalizeLine = line.Trim();
+
+        if (normalizeLine.Contains('}'))
+        {
+            _currentindent--;
+        }
+
         _stringBuilder.AppendLine($"{GetCurrentIndent()}{normalizeLine}");
 
         if (normalizeLine.Contains('{'))
         {
             _currentindent++;
-        }
-        else if (normalizeLine.Contains('}'))
-        {
-            _currentindent--;
         }
     }
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Frozen;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +13,7 @@ namespace Nestor.Db.Services;
 public interface IMigrator
 {
     void Migrate(NestorDbContext dbContext);
-    ValueTask MigrateAsync(NestorDbContext dbContext, CancellationToken ct);
+    ConfiguredValueTaskAwaitable MigrateAsync(NestorDbContext dbContext, CancellationToken ct);
 }
 
 public sealed class Migrator : IMigrator
@@ -67,7 +68,15 @@ public sealed class Migrator : IMigrator
         }
     }
 
-    public async ValueTask MigrateAsync(NestorDbContext dbContext, CancellationToken ct)
+    public ConfiguredValueTaskAwaitable MigrateAsync(
+        NestorDbContext dbContext,
+        CancellationToken ct
+    )
+    {
+        return MigrateCore(dbContext, ct).ConfigureAwait(false);
+    }
+
+    private async ValueTask MigrateCore(NestorDbContext dbContext, CancellationToken ct)
     {
         var databaseCreator = dbContext.GetService<IRelationalDatabaseCreator>();
 
