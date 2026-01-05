@@ -46,7 +46,10 @@ public sealed class Migrator : IMigrator
 
             foreach (var migration in migrations)
             {
-                dbContext.Database.ExecuteSqlRaw(migration.Value);
+                dbContext.Database.ExecuteSqlInterpolated(
+                    FormattableStringFactory.Create(migration.Value)
+                );
+
                 dbContext.Migrations.Add(new() { Id = migration.Key, Sql = migration.Value });
             }
 
@@ -58,7 +61,10 @@ public sealed class Migrator : IMigrator
 
             foreach (var migration in migrations)
             {
-                dbContext.Database.ExecuteSqlRaw(migration.Value);
+                dbContext.Database.ExecuteSqlInterpolated(
+                    FormattableStringFactory.Create(migration.Value)
+                );
+
                 dbContext.Migrations.Add(new() { Id = migration.Key, Sql = migration.Value });
             }
 
@@ -96,8 +102,15 @@ public sealed class Migrator : IMigrator
 
             foreach (var migration in migrations)
             {
-                await dbContext.Database.ExecuteSqlRawAsync(migration.Value, ct);
-                dbContext.Migrations.Add(new() { Id = migration.Key, Sql = migration.Value });
+                await dbContext.Database.ExecuteSqlInterpolatedAsync(
+                    FormattableStringFactory.Create(migration.Value),
+                    ct
+                );
+
+                await dbContext.Migrations.AddAsync(
+                    new() { Id = migration.Key, Sql = migration.Value },
+                    ct
+                );
             }
 
             await dbContext.SaveChangesAsync(ct);
@@ -108,8 +121,15 @@ public sealed class Migrator : IMigrator
 
             foreach (var migration in migrations)
             {
-                await dbContext.Database.ExecuteSqlRawAsync(migration.Value, ct);
-                dbContext.Migrations.Add(new() { Id = migration.Key, Sql = migration.Value });
+                await dbContext.Database.ExecuteSqlInterpolatedAsync(
+                    FormattableStringFactory.Create(migration.Value),
+                    ct
+                );
+
+                await dbContext.Migrations.AddAsync(
+                    new() { Id = migration.Key, Sql = migration.Value },
+                    ct
+                );
             }
 
             await dbContext.SaveChangesAsync(ct);
