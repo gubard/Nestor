@@ -46,10 +46,7 @@ public sealed class Migrator : IMigrator
 
             foreach (var migration in migrations)
             {
-                dbContext.Database.ExecuteSqlInterpolated(
-                    FormattableStringFactory.Create(migration.Value)
-                );
-
+                dbContext.Database.ExecuteSqlRaw(migration.Value);
                 dbContext.Migrations.Add(new() { Id = migration.Key, Sql = migration.Value });
             }
 
@@ -61,10 +58,7 @@ public sealed class Migrator : IMigrator
 
             foreach (var migration in migrations)
             {
-                dbContext.Database.ExecuteSqlInterpolated(
-                    FormattableStringFactory.Create(migration.Value)
-                );
-
+                dbContext.Database.ExecuteSqlRaw(migration.Value);
                 dbContext.Migrations.Add(new() { Id = migration.Key, Sql = migration.Value });
             }
 
@@ -102,10 +96,7 @@ public sealed class Migrator : IMigrator
 
             foreach (var migration in migrations)
             {
-                await dbContext.Database.ExecuteSqlInterpolatedAsync(
-                    FormattableStringFactory.Create(migration.Value),
-                    ct
-                );
+                await dbContext.Database.ExecuteSqlRawAsync(migration.Value, ct);
 
                 await dbContext.Migrations.AddAsync(
                     new() { Id = migration.Key, Sql = migration.Value },
@@ -121,10 +112,7 @@ public sealed class Migrator : IMigrator
 
             foreach (var migration in migrations)
             {
-                await dbContext.Database.ExecuteSqlInterpolatedAsync(
-                    FormattableStringFactory.Create(migration.Value),
-                    ct
-                );
+                await dbContext.Database.ExecuteSqlRawAsync(migration.Value, ct);
 
                 await dbContext.Migrations.AddAsync(
                     new() { Id = migration.Key, Sql = migration.Value },
