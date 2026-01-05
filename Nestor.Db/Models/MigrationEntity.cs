@@ -2,6 +2,6 @@
 
 public class MigrationEntity
 {
-    public long Id { get; set; }
+    public int Id { get; set; }
     public string Sql { get; set; } = string.Empty;
 }

@@ -18,9 +18,9 @@ public interface IMigrator
 
 public sealed class Migrator : IMigrator
 {
-    private readonly FrozenDictionary<long, string> _migrations;
+    private readonly FrozenDictionary<int, string> _migrations;
 
-    public Migrator(FrozenDictionary<long, string> migrations)
+    public Migrator(FrozenDictionary<int, string> migrations)
     {
         _migrations = migrations;
     }

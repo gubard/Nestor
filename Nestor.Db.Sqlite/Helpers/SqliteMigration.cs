@@ -4,25 +4,25 @@ namespace Nestor.Db.Sqlite.Helpers;
 
 public static class SqliteMigration
 {
-    public static readonly FrozenDictionary<long, string> Migrations;
+    public static readonly FrozenDictionary<int, string> Migrations;
 
     static SqliteMigration()
     {
-        Migrations = new Dictionary<long, string>
+        Migrations = new Dictionary<int, string>
         {
             {
-                202601031118,
+                1,
                 @"
-CREATE TABLE IF NOT EXISTS MigrationEntity (
+CREATE TABLE IF NOT EXISTS Migrations (
     Id INTEGER PRIMARY KEY NOT NULL,
     Sql TEXT NOT NULL
 );
 "
             },
             {
-                202601031119,
+                2,
                 @"
-CREATE TABLE IF NOT EXISTS EventEntity (
+CREATE TABLE IF NOT EXISTS Events (
     Id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     EntityId TEXT NOT NULL,
     EntityType TEXT NOT NULL CHECK(length(EntityType) <= 255),
