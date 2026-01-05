@@ -9,5 +9,6 @@ public sealed class MigrationEntityTypeConfiguration : IEntityTypeConfiguration<
     public void Configure(EntityTypeBuilder<MigrationEntity> builder)
     {
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).ValueGeneratedOnAdd();
     }
 }
