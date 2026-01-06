@@ -1,6 +1,5 @@
 ﻿namespace Nestor.Db.Models;
 
-[InsertQuery]
 public partial class MigrationEntity
 {
     public int Id { get; set; }
