@@ -12,4 +12,11 @@ public abstract class NestorDbContext : DbContext
 
     public DbSet<EventEntity> Events { get; set; }
     public DbSet<MigrationEntity> Migrations { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.ApplyConfiguration(new EventEntityTypeConfiguration());
+        modelBuilder.ApplyConfiguration(new MigrationEntityTypeConfiguration());
+    }
 }
