@@ -1,9 +1,21 @@
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Nestor.Db.Models;
 
 namespace Nestor.Db.Services;
 
-public abstract class NestorDbContext : DbContext
+public interface INestorDbContext
+{
+    DbSet<EventEntity> Events { get; }
+    DbSet<MigrationEntity> Migrations { get; }
+
+    void AddRange(params object[] entities);
+    Task AddRangeAsync(IEnumerable<object> entities, CancellationToken cancellationToken);
+}
+
+public abstract class NestorDbContext : DbContext, INestorDbContext
 {
     protected NestorDbContext() { }
 

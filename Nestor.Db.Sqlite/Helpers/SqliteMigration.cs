@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS Events (
     EntityDateOnlyValue TEXT,
     EntityTimeOnlyValue TEXT,
     EntityTimeSpanValue TEXT,
-    IsLast INTEGER NOT NULL CHECK (IsLast IN (0, 1))
+    TransactionId TEXT NOT NULL
 );
 "
             },

@@ -24,14 +24,15 @@ public interface IEfService<in TGetRequest, in TPostRequest, TGetResponse, TPost
     long GetLastId();
 }
 
-public abstract class EfService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
+public abstract class EfService<TGetRequest, TPostRequest, TGetResponse, TPostResponse, TDbContext>
     : IEfService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
     where TGetResponse : IValidationErrors, new()
     where TPostResponse : IValidationErrors, new()
+    where TDbContext : NestorDbContext
 {
-    protected readonly NestorDbContext DbContext;
+    protected readonly TDbContext DbContext;
 
-    protected EfService(NestorDbContext dbContext)
+    protected EfService(TDbContext dbContext)
     {
         DbContext = dbContext;
     }
@@ -42,11 +43,12 @@ public abstract class EfService<TGetRequest, TPostRequest, TGetResponse, TPostRe
     );
 
     public abstract ConfiguredValueTaskAwaitable<TPostResponse> PostAsync(
+        Guid idempotentId,
         TPostRequest request,
         CancellationToken ct
     );
 
-    public abstract TPostResponse Post(TPostRequest request);
+    public abstract TPostResponse Post(Guid idempotentId, TPostRequest request);
     public abstract TGetResponse Get(TGetRequest request);
 
     public ConfiguredValueTaskAwaitable SaveEventsAsync(

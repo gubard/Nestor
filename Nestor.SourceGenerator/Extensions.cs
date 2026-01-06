@@ -5,6 +5,24 @@ namespace Nestor.SourceGenerator;
 
 public static class Extensions
 {
+    public static TypeSyntax GetAttributeValueType<T>(
+        this T syntax,
+        string attributeName,
+        int argumentIndex
+    )
+        where T : BaseTypeDeclarationSyntax
+    {
+        var attribute = syntax
+            .AttributeLists.SelectMany(x => x.Attributes)
+            .First(x => x.Name.ToString() == attributeName);
+
+        return attribute.ArgumentList?.Arguments[argumentIndex].Expression switch
+        {
+            TypeOfExpressionSyntax typeOf => typeOf.Type,
+            _ => throw new InvalidOperationException(),
+        };
+    }
+
     public static string GetAttributeValueSting<T>(
         this T syntax,
         string attributeName,
@@ -35,6 +53,14 @@ public static class Extensions
         where T : BaseTypeDeclarationSyntax
     {
         return syntax.Identifier.Text;
+    }
+
+    public static string GetTableName<T>(this T syntax)
+        where T : BaseTypeDeclarationSyntax
+    {
+        var entityName = syntax.GetName();
+
+        return $"{entityName.Substring(0, entityName.Length - 6)}s";
     }
 
     public static string GetFullName<T>(this T syntax)
