@@ -11,5 +11,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Gaia\Gaia\Gaia.csproj" />
+    <ProjectReference
+      Include="..\Nestor.SourceGenerator\Nestor.SourceGenerator.csproj"
+      ReferenceOutputAssembly="false"
+      OutputItemType="Analyzer"
+    />
   </ItemGroup>
 </Project>

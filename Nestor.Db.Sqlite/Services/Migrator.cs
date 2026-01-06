@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Frozen;
-using System.Linq;
+﻿using System.Collections.Frozen;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
+using Nestor.Db.Models;
+using Nestor.Db.Services;
+using Nestor.Db.Sqlite.Helpers;
 
-namespace Nestor.Db.Services;
+namespace Nestor.Db.Sqlite.Services;
 
 public interface IMigrator
 {
@@ -47,7 +46,13 @@ public sealed class Migrator : IMigrator
             foreach (var migration in migrations)
             {
                 dbContext.Database.ExecuteSqlRaw(migration.Value);
-                dbContext.Migrations.Add(new() { Id = migration.Key, Sql = migration.Value });
+
+                dbContext.Database.ExecuteSqlRaw(
+                    MigrationEntity.InsertSqlite,
+                    new MigrationEntity { Id = migration.Key, Sql = migration.Value }
+                        .ToSqliteParameters()
+                        .OfType<object>()
+                );
             }
 
             dbContext.SaveChanges();
@@ -59,7 +64,13 @@ public sealed class Migrator : IMigrator
             foreach (var migration in migrations)
             {
                 dbContext.Database.ExecuteSqlRaw(migration.Value);
-                dbContext.Migrations.Add(new() { Id = migration.Key, Sql = migration.Value });
+
+                dbContext.Database.ExecuteSqlRaw(
+                    MigrationEntity.InsertSqlite,
+                    new MigrationEntity { Id = migration.Key, Sql = migration.Value }
+                        .ToSqliteParameters()
+                        .OfType<object>()
+                );
             }
 
             dbContext.SaveChanges();
@@ -98,8 +109,13 @@ public sealed class Migrator : IMigrator
             {
                 await dbContext.Database.ExecuteSqlRawAsync(migration.Value, ct);
 
-                await dbContext.Migrations.AddAsync(
-                    new() { Id = migration.Key, Sql = migration.Value },
+                await dbContext.Database.ExecuteSqlRawAsync(
+                    MigrationEntity.InsertSqlite,
+                    new MigrationEntity
+                    {
+                        Id = migration.Key,
+                        Sql = migration.Value,
+                    }.ToSqliteParameters(),
                     ct
                 );
             }
@@ -114,8 +130,13 @@ public sealed class Migrator : IMigrator
             {
                 await dbContext.Database.ExecuteSqlRawAsync(migration.Value, ct);
 
-                await dbContext.Migrations.AddAsync(
-                    new() { Id = migration.Key, Sql = migration.Value },
+                await dbContext.Database.ExecuteSqlRawAsync(
+                    MigrationEntity.InsertSqlite,
+                    new MigrationEntity
+                    {
+                        Id = migration.Key,
+                        Sql = migration.Value,
+                    }.ToSqliteParameters(),
                     ct
                 );
             }

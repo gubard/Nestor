@@ -12,3 +12,6 @@ public class SourceEntity : Attribute
 
     public string IdPropertyName { get; }
 }
+
+[AttributeUsage(AttributeTargets.Class)]
+public class InsertQuery : Attribute;
