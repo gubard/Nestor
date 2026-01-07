@@ -35,6 +35,12 @@ public sealed class EventEntityTypeConfiguration : IEntityTypeConfiguration<Even
                     c => c
                 )
             );
+
+        builder
+            .Property(e => e.EntityDateOnlyValue)
+            .Metadata.SetValueComparer(
+                new ValueComparer<DateOnly?>((c1, c2) => c1 == c2, c => c.GetHashCode(), c => c)
+            );
     }
 }
 
