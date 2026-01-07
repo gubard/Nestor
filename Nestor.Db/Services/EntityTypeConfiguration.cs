@@ -1,6 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Nestor.Db.Models;
 
@@ -15,16 +13,6 @@ public sealed class EventEntityTypeConfiguration : IEntityTypeConfiguration<Even
         builder.Property(e => e.EntityType).HasMaxLength(255);
         builder.Property(e => e.EntityProperty).HasMaxLength(255);
         builder.Property(e => e.UserId).HasMaxLength(255);
-
-        builder
-            .Property(e => e.CreatedAt)
-            .Metadata.SetValueComparer(
-                new ValueComparer<DateTimeOffset>(
-                    (c1, c2) => c1.Equals(c2),
-                    c => c.GetHashCode(),
-                    c => c
-                )
-            );
     }
 }
 
