@@ -25,7 +25,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("return;");
         stringBuilder.AppendLine("}");
         stringBuilder.AppendLine();
-        stringBuilder.AppendLine("var now = DateTime.Now;");
+        stringBuilder.AppendLine("var now = DateTimeOffset.UtcNow;");
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("context.AddRange(ids.Select(x =>");
         stringBuilder.AppendLine($"new global::{TypeFullNames.EventEntity}");
@@ -85,7 +85,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("return;");
         stringBuilder.AppendLine("}");
         stringBuilder.AppendLine();
-        stringBuilder.AppendLine("var now = DateTime.Now;");
+        stringBuilder.AppendLine("var now = DateTimeOffset.UtcNow;");
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("await context.AddRangeAsync(ids.Select(x =>");
         stringBuilder.AppendLine($"new global::{TypeFullNames.EventEntity}");
@@ -136,7 +136,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("var index = 0;");
         stringBuilder.AppendLine("var eventCount = edits.Sum(x => x.GetEdited());");
-        stringBuilder.AppendLine("var now = DateTime.Now;");
+        stringBuilder.AppendLine("var now = DateTimeOffset.UtcNow;");
 
         stringBuilder.AppendLine(
             $"var events = new global::{TypeFullNames.EventEntity}[eventCount];"
@@ -237,7 +237,7 @@ public class EventEntryGenerator : IIncrementalGenerator
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("var index = 0;");
         stringBuilder.AppendLine("var eventCount = edits.Sum(x => x.GetEdited());");
-        stringBuilder.AppendLine("var now = DateTime.Now;");
+        stringBuilder.AppendLine("var now = DateTimeOffset.UtcNow;");
 
         stringBuilder.AppendLine(
             $"var events = new global::{TypeFullNames.EventEntity}[eventCount];"
