@@ -15,9 +15,7 @@ public sealed class EventEntityTypeConfiguration : IEntityTypeConfiguration<Even
         builder.Property(e => e.EntityProperty).HasMaxLength(255).SetComparerClass();
         builder.Property(e => e.UserId).HasMaxLength(255).SetComparerClass();
         builder.Property(e => e.EntityTimeOnlyValue).SetComparerNullStruct();
-        builder.Property(e => e.TransactionId).SetComparerStruct();
         builder.Property(e => e.EntityId).SetComparerStruct();
-        builder.Property(e => e.EntityGuidValue).SetComparerNullStruct();
         builder.Property(e => e.EntityDecimalValue).SetComparerNullStruct();
         builder.Property(e => e.EntityDateTimeValue).SetComparerNullStruct();
         builder.Property(e => e.CreatedAt).SetComparerStruct();
