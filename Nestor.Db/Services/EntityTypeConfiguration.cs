@@ -17,6 +17,28 @@ public sealed class EventEntityTypeConfiguration : IEntityTypeConfiguration<Even
         builder.Property(e => e.UserId).HasMaxLength(255);
 
         builder
+            .Property(e => e.TransactionId)
+            .Metadata.SetValueComparer(
+                new ValueComparer<Guid>((c1, c2) => c1 == c2, c => c.GetHashCode(), c => c)
+            );
+
+        builder
+            .Property(e => e.EntityId)
+            .Metadata.SetValueComparer(
+                new ValueComparer<Guid>((c1, c2) => c1 == c2, c => c.GetHashCode(), c => c)
+            );
+
+        builder
+            .Property(e => e.EntityGuidValue)
+            .Metadata.SetValueComparer(
+                new ValueComparer<Guid?>(
+                    (c1, c2) => c1 == c2,
+                    c => c == null ? 0 : c.GetHashCode(),
+                    c => c
+                )
+            );
+
+        builder
             .Property(e => e.EntityDecimalValue)
             .Metadata.SetValueComparer(
                 new ValueComparer<decimal?>(
