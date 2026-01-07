@@ -29,8 +29,8 @@ public sealed class EventEntityTypeConfiguration : IEntityTypeConfiguration<Even
         builder
             .Property(e => e.EntityDateTimeOffsetValue)
             .Metadata.SetValueComparer(
-                new ValueComparer<DateTimeOffset>(
-                    (c1, c2) => c1.Equals(c2),
+                new ValueComparer<DateTimeOffset?>(
+                    (c1, c2) => c1 == null && c2 == null || c1 != null && c1.Equals(c2),
                     c => c.GetHashCode(),
                     c => c
                 )
