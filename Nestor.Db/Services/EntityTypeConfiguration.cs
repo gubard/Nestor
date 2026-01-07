@@ -17,6 +17,12 @@ public sealed class EventEntityTypeConfiguration : IEntityTypeConfiguration<Even
         builder.Property(e => e.UserId).HasMaxLength(255);
 
         builder
+            .Property(e => e.EntityDateTimeValue)
+            .Metadata.SetValueComparer(
+                new ValueComparer<DateTime?>((c1, c2) => c1 == c2, c => c.GetHashCode(), c => c)
+            );
+
+        builder
             .Property(e => e.CreatedAt)
             .Metadata.SetValueComparer(
                 new ValueComparer<DateTimeOffset>(
