@@ -50,7 +50,7 @@ public sealed class MigrationEntityTypeConfiguration : IEntityTypeConfiguration<
     public void Configure(EntityTypeBuilder<MigrationEntity> builder)
     {
         builder.HasKey(e => e.Id);
-        builder.Property(e => e.Id).ValueGeneratedNever().SetComparerStruct();
+        builder.Property(e => e.Id).SetComparerStruct();
         builder.Property(e => e.Sql).SetComparerClass();
     }
 }
