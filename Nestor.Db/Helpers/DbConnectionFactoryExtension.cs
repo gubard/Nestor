@@ -29,6 +29,7 @@ public static class DbConnectionFactoryExtension
                 using var connection = factory.Create();
                 using var command = connection.CreateCommand();
                 command.CommandText = query.Sql;
+                command.Parameters.Clear();
                 command.Parameters.AddRange(query.Parameters);
                 connection.Open();
                 command.ExecuteNonQuery();
@@ -54,6 +55,7 @@ public static class DbConnectionFactoryExtension
             using var connection = factory.Create();
             using var command = connection.CreateCommand();
             command.CommandText = query.Sql;
+            command.Parameters.Clear();
             command.Parameters.AddRange(query.Parameters);
             connection.Open();
             var result = command.ExecuteScalar();
@@ -74,6 +76,7 @@ public static class DbConnectionFactoryExtension
             using var connection = factory.Create();
             using var command = connection.CreateCommand();
             command.CommandText = query.Sql;
+            command.Parameters.Clear();
             command.Parameters.AddRange(query.Parameters);
             connection.Open();
             var result = command.ExecuteScalar();
@@ -94,6 +97,7 @@ public static class DbConnectionFactoryExtension
             using var connection = factory.Create();
             using var command = connection.CreateCommand();
             command.CommandText = query.Sql;
+            command.Parameters.Clear();
             command.Parameters.AddRange(query.Parameters);
             connection.Open();
 
@@ -115,6 +119,7 @@ public static class DbConnectionFactoryExtension
                 await using var connection = factory.Create();
                 await using var command = connection.CreateCommand();
                 command.CommandText = query.Sql;
+                command.Parameters.Clear();
                 command.Parameters.AddRange(query.Parameters);
                 await connection.OpenAsync(ct);
                 await command.ExecuteNonQueryAsync(ct);
@@ -132,6 +137,7 @@ public static class DbConnectionFactoryExtension
             await using var connection = factory.Create();
             await using var command = connection.CreateCommand();
             command.CommandText = query.Sql;
+            command.Parameters.Clear();
             command.Parameters.AddRange(query.Parameters);
             await connection.OpenAsync(ct);
             var rowCount = await command.ExecuteNonQueryAsync(ct);
@@ -144,6 +150,7 @@ public static class DbConnectionFactoryExtension
             await using var connection = factory.Create();
             await using var command = connection.CreateCommand();
             command.CommandText = query.Sql;
+            command.Parameters.Clear();
             command.Parameters.AddRange(query.Parameters);
             await connection.OpenAsync(ct);
             var result = await command.ExecuteScalarAsync(ct);
@@ -153,10 +160,12 @@ public static class DbConnectionFactoryExtension
 
         private async ValueTask<long> ExecuteScalarInt64Core(SqlQuery query, CancellationToken ct)
         {
-            await using var connectionString = factory.Create();
-            await using var command = connectionString.CreateCommand();
+            await using var connection = factory.Create();
+            await using var command = connection.CreateCommand();
             command.CommandText = query.Sql;
+            command.Parameters.Clear();
             command.Parameters.AddRange(query.Parameters);
+            await connection.OpenAsync(ct);
             var result = await command.ExecuteScalarAsync(ct);
 
             return Convert.ToInt64(result);

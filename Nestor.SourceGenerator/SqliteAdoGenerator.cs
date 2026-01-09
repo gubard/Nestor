@@ -20,7 +20,7 @@ public class SqliteAdoGenerator : IIncrementalGenerator
             {
                 foreach (var attribute in attributes)
                 {
-                    if (attribute.ConstructorArguments.Length != 2)
+                    if (attribute.ConstructorArguments.Length != 3)
                     {
                         continue;
                     }
@@ -31,6 +31,11 @@ public class SqliteAdoGenerator : IIncrementalGenerator
                     }
 
                     if (attribute.ConstructorArguments[1].Value is not string idName)
+                    {
+                        continue;
+                    }
+
+                    if (attribute.ConstructorArguments[2].Value is not bool isAutoIncrementId)
                     {
                         continue;
                     }
@@ -67,7 +72,15 @@ public class SqliteAdoGenerator : IIncrementalGenerator
                     stringBuilder.AppendLine();
                     AddGetParametersMethods(stringBuilder, type, properties);
                     stringBuilder.AppendLine();
-                    AddInsertMethod(stringBuilder, type, properties);
+
+                    AddCreateInsertQueryMethod(
+                        stringBuilder,
+                        type,
+                        isAutoIncrementId
+                            ? properties.Where(x => x.Name != idName).ToArray()
+                            : properties
+                    );
+
                     stringBuilder.AppendLine();
                     AddUpdateMethod(stringBuilder, type, id);
                     stringBuilder.AppendLine();
@@ -174,7 +187,7 @@ public class SqliteAdoGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("}");
     }
 
-    private void AddInsertMethod(
+    private void AddCreateInsertQueryMethod(
         CSharpStringBuilder stringBuilder,
         INamedTypeSymbol type,
         IPropertySymbol[] properties
@@ -208,7 +221,11 @@ public class SqliteAdoGenerator : IIncrementalGenerator
         );
 
         stringBuilder.AppendLine("var valueNames = new string[values.Length];");
-        stringBuilder.AppendLine($"var sql = \"INSERT INTO {type.GetTableName()} VALUES \";");
+
+        stringBuilder.AppendLine(
+            $"var sql = \"INSERT INTO {type.GetTableName()} ({string.Join(", ", properties.Select(x => x.Name))}) VALUES \";"
+        );
+
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("for(var i = 0; i < values.Length; i++)");
         stringBuilder.AppendLine("{");
@@ -223,7 +240,7 @@ public class SqliteAdoGenerator : IIncrementalGenerator
 
         stringBuilder.AppendLine("}");
         stringBuilder.AppendLine();
-        stringBuilder.AppendLine("sql += string.Join(\" \", valueNames);");
+        stringBuilder.AppendLine("sql += string.Join(\", \", valueNames);");
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("return new(sql, parameters.ToArray());");
         stringBuilder.AppendLine("}");

@@ -1,4 +1,5 @@
 ﻿using System.Data.Common;
+using System.IO;
 using Gaia.Services;
 using Microsoft.Data.Sqlite;
 
@@ -9,10 +10,15 @@ public interface IDbConnectionFactory : IFactory<DbConnection>;
 public sealed class SqliteDbConnectionFactory : IDbConnectionFactory
 {
     private readonly string _connectionString;
+    private readonly FileInfo _file;
 
-    public SqliteDbConnectionFactory(SqliteConnectionStringBuilder builder)
+    public SqliteDbConnectionFactory(FileInfo file)
     {
-        _connectionString = builder.ConnectionString;
+        _file = file;
+        _connectionString = new SqliteConnectionStringBuilder
+        {
+            DataSource = file.FullName,
+        }.ConnectionString;
     }
 
     public DbConnection Create()
