@@ -1,6 +1,7 @@
 ﻿using System.Collections.Frozen;
+using System.Collections.Generic;
 
-namespace Nestor.Db.Sqlite.Helpers;
+namespace Nestor.Db.Helpers;
 
 public static class SqliteMigration
 {

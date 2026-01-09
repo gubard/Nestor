@@ -43,6 +43,11 @@ public static class Extensions
         };
     }
 
+    public static string GetNamespace(this ISymbol symbol)
+    {
+        return symbol.ContainingNamespace.ToDisplayString();
+    }
+
     public static string GetNamespace<T>(this T syntax)
         where T : SyntaxNode
     {
@@ -61,6 +66,11 @@ public static class Extensions
         var entityName = syntax.GetName();
 
         return $"{entityName.Substring(0, entityName.Length - 6)}s";
+    }
+
+    public static string GetTableName(this ISymbol syntax)
+    {
+        return $"{syntax.Name.Substring(0, syntax.Name.Length - 6)}s";
     }
 
     public static string GetFullName<T>(this T syntax)
@@ -105,6 +115,50 @@ public static class Extensions
                 { } s => s,
             },
             { } s => s.ToString(),
+        };
+    }
+
+    public static string GetRealFullName(this ISymbol symbol)
+    {
+        return symbol.ToString() switch
+        {
+            "bool" => "System." + nameof(Boolean),
+            "sbyte" => "System." + nameof(SByte),
+            "short" => "System." + nameof(Int16),
+            "int" => "System." + nameof(Int32),
+            "long" => "System." + nameof(Int64),
+            "byte" => "System." + nameof(Byte),
+            "ushort" => "System." + nameof(UInt16),
+            "uint" => "System." + nameof(UInt32),
+            "ulong" => "System." + nameof(UInt64),
+            "float" => "System." + nameof(Single),
+            "double" => "System." + nameof(Double),
+            "decimal" => "System." + nameof(Decimal),
+            "char" => "System." + nameof(Char),
+            "string" => "System." + nameof(String),
+            { } s => s,
+        };
+    }
+
+    public static string GetRealName(this ISymbol symbol)
+    {
+        return symbol.ToString() switch
+        {
+            "bool" => nameof(Boolean),
+            "sbyte" => nameof(SByte),
+            "short" => nameof(Int16),
+            "int" => nameof(Int32),
+            "long" => nameof(Int64),
+            "byte" => nameof(Byte),
+            "ushort" => nameof(UInt16),
+            "uint" => nameof(UInt32),
+            "ulong" => nameof(UInt64),
+            "float" => nameof(Single),
+            "double" => nameof(Double),
+            "decimal" => nameof(Decimal),
+            "char" => nameof(Char),
+            "string" => nameof(String),
+            { } s => symbol.Name,
         };
     }
 }

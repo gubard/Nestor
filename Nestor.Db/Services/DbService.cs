@@ -3,13 +3,15 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Gaia.Helpers;
 using Gaia.Services;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
+using Nestor.Db.Helpers;
 using Nestor.Db.Models;
 
 namespace Nestor.Db.Services;
 
-public interface IEfService<in TGetRequest, in TPostRequest, TGetResponse, TPostResponse>
+public interface IDbService<in TGetRequest, in TPostRequest, TGetResponse, TPostResponse>
     : IService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
     where TGetResponse : IValidationErrors, new()
     where TPostResponse : IValidationErrors, new()
@@ -24,17 +26,16 @@ public interface IEfService<in TGetRequest, in TPostRequest, TGetResponse, TPost
     long GetLastId();
 }
 
-public abstract class EfService<TGetRequest, TPostRequest, TGetResponse, TPostResponse, TDbContext>
-    : IEfService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
+public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
+    : IDbService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
     where TGetResponse : IValidationErrors, new()
     where TPostResponse : IValidationErrors, new()
-    where TDbContext : NestorDbContext
 {
-    protected readonly TDbContext DbContext;
+    protected readonly IDbConnectionFactory Factory;
 
-    protected EfService(TDbContext dbContext)
+    protected DbService(IDbConnectionFactory factory)
     {
-        DbContext = dbContext;
+        Factory = factory;
     }
 
     public abstract ConfiguredValueTaskAwaitable<TGetResponse> GetAsync(
@@ -66,8 +67,7 @@ public abstract class EfService<TGetRequest, TPostRequest, TGetResponse, TPostRe
             return;
         }
 
-        await DbContext.AddRangeAsync(events.ToArray(), ct);
-        await DbContext.SaveChangesAsync(ct);
+        await Factory.ExecuteNonQueryAsync(events.Span.CreateInsertQuery(), ct);
     }
 
     public void SaveEvents(ReadOnlyMemory<EventEntity> events)
@@ -77,36 +77,54 @@ public abstract class EfService<TGetRequest, TPostRequest, TGetResponse, TPostRe
             return;
         }
 
-        DbContext.AddRange(events.ToArray());
-        DbContext.SaveChanges();
+        Factory.ExecuteNonQuery(events.Span.CreateInsertQuery());
     }
 
     public ConfiguredValueTaskAwaitable<long> GetLastIdAsync(CancellationToken ct)
     {
-        return GetLastIdCore(ct).ConfigureAwait(false);
-    }
-
-    private async ValueTask<long> GetLastIdCore(CancellationToken ct)
-    {
-        var lastId = await DbContext.Events.MaxAsync(x => (long?)x.Id, ct);
-
-        if (lastId is null)
-        {
-            return 0;
-        }
-
-        return lastId.Value;
+        return Factory.ExecuteScalarInt64Async("SELECT IFNULL(MAX(id), 0) FROM Events", ct);
     }
 
     public long GetLastId()
     {
-        var lastId = DbContext.Events.Max(x => (long?)x.Id);
+        return Factory.ExecuteScalarInt64("SELECT IFNULL(MAX(id), 0) FROM Events");
+    }
 
-        if (lastId is null)
-        {
-            return 0;
-        }
+    protected ConfiguredValueTaskAwaitable<EventEntity[]> GetLastEventsAsync(
+        DbSession session,
+        long lastId,
+        CancellationToken ct
+    )
+    {
+        return GetLastEventsCore(session, lastId, ct).ConfigureAwait(false);
+    }
 
-        return lastId.Value;
+    private async ValueTask<EventEntity[]> GetLastEventsCore(
+        DbSession session,
+        long lastId,
+        CancellationToken ct
+    )
+    {
+        await using var reader = await session.ExecuteReaderAsync(
+            CreateLastEventsQuery(lastId),
+            ct
+        );
+
+        return (await reader.ReadEventsAsync(ct).ToEnumerableAsync()).ToArray();
+    }
+
+    protected EventEntity[] GetLastEvents(DbSession session, long lastId)
+    {
+        using var reader = session.ExecuteReader(CreateLastEventsQuery(lastId));
+
+        return reader.ReadEvents().ToArray();
+    }
+
+    private static SqlQuery CreateLastEventsQuery(long lastId)
+    {
+        return new(
+            $"{EventsExt.SelectQuery} WHERE Id > @LastId",
+            new SqliteParameter[] { new("@LastId", lastId) }
+        );
     }
 }
