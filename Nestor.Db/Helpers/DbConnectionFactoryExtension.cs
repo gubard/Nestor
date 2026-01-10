@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data.Common;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -48,6 +49,26 @@ public static class DbConnectionFactoryExtension
         )
         {
             return factory.IsCanConnectCore(query, ct).ConfigureAwait(false);
+        }
+
+        public DbDataReader ExecuteReader(SqlQuery query)
+        {
+            using var connection = factory.Create();
+            using var command = connection.CreateCommand();
+            command.CommandText = query.Sql;
+            command.Parameters.Clear();
+            command.Parameters.AddRange(query.Parameters);
+            connection.Open();
+
+            return command.ExecuteReader();
+        }
+
+        public ConfiguredValueTaskAwaitable<DbDataReader> ExecuteReaderAsync(
+            SqlQuery query,
+            CancellationToken ct
+        )
+        {
+            return factory.ExecuteReaderCore(query, ct).ConfigureAwait(false);
         }
 
         public long ExecuteScalarInt64(SqlQuery query)
@@ -110,6 +131,18 @@ public static class DbConnectionFactoryExtension
         )
         {
             return factory.ExecuteNonQueryCore(query, ct).ConfigureAwait(false);
+        }
+
+        public async ValueTask<DbDataReader> ExecuteReaderCore(SqlQuery query, CancellationToken ct)
+        {
+            await using var connection = factory.Create();
+            await using var command = connection.CreateCommand();
+            command.CommandText = query.Sql;
+            command.Parameters.Clear();
+            command.Parameters.AddRange(query.Parameters);
+            await connection.OpenAsync(ct);
+
+            return await command.ExecuteReaderAsync(ct);
         }
 
         private async ValueTask<bool> IsCanConnectCore(SqlQuery query, CancellationToken ct)

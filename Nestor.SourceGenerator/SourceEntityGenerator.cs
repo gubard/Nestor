@@ -234,7 +234,8 @@ public class SourceEntityGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("public static void DeleteEntities(");
         stringBuilder.AppendLine($"this global::{TypeFullNames.DbSession} session,");
         stringBuilder.AppendLine("string userId,");
-        stringBuilder.AppendLine("Guid transactionId,");
+        stringBuilder.AppendLine($"global::{TypeFullNames.Guid} transactionId,");
+        stringBuilder.AppendLine("bool isUseEvents,");
         stringBuilder.AppendLine($"params global::{id.Type.GetRealFullName()}[] ids)");
         stringBuilder.AppendLine("{");
         stringBuilder.AppendLine("if(ids.Length == 0)");
@@ -244,6 +245,8 @@ public class SourceEntityGenerator : IIncrementalGenerator
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("var now = DateTimeOffset.UtcNow;");
         stringBuilder.AppendLine();
+        stringBuilder.AppendLine("if(isUseEvents)");
+        stringBuilder.AppendLine("{");
         stringBuilder.AppendLine("session.ExecuteNonQuery(ids.Select(x =>");
         stringBuilder.AppendLine($"new global::{TypeFullNames.EventEntity}");
         stringBuilder.AppendLine("{");
@@ -256,6 +259,7 @@ public class SourceEntityGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("CreatedAt = now,");
         stringBuilder.AppendLine("}).ToArray().CreateInsertQuery());");
         stringBuilder.AppendLine();
+        stringBuilder.AppendLine("}");
 
         stringBuilder.AppendLine(
             $"session.ExecuteNonQuery(ids.CreateDelete{type.GetTableName()}Query());"
@@ -276,13 +280,14 @@ public class SourceEntityGenerator : IIncrementalGenerator
 
         stringBuilder.AppendLine($"this global::{TypeFullNames.DbSession} session,");
         stringBuilder.AppendLine("string userId,");
-        stringBuilder.AppendLine("Guid transactionId,");
+        stringBuilder.AppendLine($"global::{TypeFullNames.Guid} transactionId,");
+        stringBuilder.AppendLine("bool isUseEvents,");
         stringBuilder.AppendLine($"global::{id.Type.GetRealFullName()}[] ids,");
         stringBuilder.AppendLine($"global::{TypeFullNames.CancellationToken} ct)");
         stringBuilder.AppendLine("{");
 
         stringBuilder.AppendLine(
-            "return DeleteEntitiesCore(session, userId, transactionId, ids, ct).ConfigureAwait(false);"
+            "return DeleteEntitiesCore(session, userId, transactionId, isUseEvents, ids, ct).ConfigureAwait(false);"
         );
 
         stringBuilder.AppendLine("}");
@@ -294,7 +299,8 @@ public class SourceEntityGenerator : IIncrementalGenerator
 
         stringBuilder.AppendLine($"global::{TypeFullNames.DbSession} session,");
         stringBuilder.AppendLine("string userId,");
-        stringBuilder.AppendLine("Guid transactionId,");
+        stringBuilder.AppendLine($"global::{TypeFullNames.Guid} transactionId,");
+        stringBuilder.AppendLine("bool isUseEvents,");
         stringBuilder.AppendLine($"global::{id.Type.GetRealFullName()}[] ids,");
         stringBuilder.AppendLine($"global::{TypeFullNames.CancellationToken} ct)");
         stringBuilder.AppendLine("{");
@@ -305,6 +311,8 @@ public class SourceEntityGenerator : IIncrementalGenerator
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("var now = DateTimeOffset.UtcNow;");
         stringBuilder.AppendLine();
+        stringBuilder.AppendLine("if(isUseEvents)");
+        stringBuilder.AppendLine("{");
         stringBuilder.AppendLine("await session.ExecuteNonQueryAsync(ids.Select(x =>");
         stringBuilder.AppendLine($"new global::{TypeFullNames.EventEntity}");
         stringBuilder.AppendLine("{");
@@ -316,6 +324,7 @@ public class SourceEntityGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("EntityBooleanValue = true,");
         stringBuilder.AppendLine("CreatedAt = now,");
         stringBuilder.AppendLine("}).ToArray().CreateInsertQuery(), ct);");
+        stringBuilder.AppendLine("}");
         stringBuilder.AppendLine();
 
         stringBuilder.AppendLine(
@@ -335,7 +344,8 @@ public class SourceEntityGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("public static void EditEntities(");
         stringBuilder.AppendLine($"this global::{TypeFullNames.DbSession} session,");
         stringBuilder.AppendLine("string userId,");
-        stringBuilder.AppendLine("Guid transactionId,");
+        stringBuilder.AppendLine($"global::{TypeFullNames.Guid} transactionId,");
+        stringBuilder.AppendLine("bool isUseEvents,");
         stringBuilder.AppendLine($"params global::{type.GetNamespace()}.Edit{type.Name}[] edits)");
         stringBuilder.AppendLine("{");
         stringBuilder.AppendLine("if(edits.Length == 0)");
@@ -412,7 +422,10 @@ public class SourceEntityGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("session.ExecuteNonQuery(queries[i]);");
         stringBuilder.AppendLine("}");
         stringBuilder.AppendLine();
+        stringBuilder.AppendLine("if(isUseEvents)");
+        stringBuilder.AppendLine("{");
         stringBuilder.AppendLine("session.ExecuteNonQuery(events.CreateInsertQuery());");
+        stringBuilder.AppendLine("}");
         stringBuilder.AppendLine("}");
     }
 
@@ -429,13 +442,14 @@ public class SourceEntityGenerator : IIncrementalGenerator
 
         stringBuilder.AppendLine($"this global::{TypeFullNames.DbSession} session,");
         stringBuilder.AppendLine("string userId,");
-        stringBuilder.AppendLine("Guid transactionId,");
+        stringBuilder.AppendLine($"global::{TypeFullNames.Guid} transactionId,");
+        stringBuilder.AppendLine("bool isUseEvents,");
         stringBuilder.AppendLine($"global::{type.GetNamespace()}.Edit{type.Name}[] edits,");
         stringBuilder.AppendLine($"global::{TypeFullNames.CancellationToken} ct)");
         stringBuilder.AppendLine("{");
 
         stringBuilder.AppendLine(
-            "return EditEntitiesCore(session, userId, transactionId, edits, ct).ConfigureAwait(false);"
+            "return EditEntitiesCore(session, userId, transactionId, isUseEvents, edits, ct).ConfigureAwait(false);"
         );
 
         stringBuilder.AppendLine("}");
@@ -446,7 +460,8 @@ public class SourceEntityGenerator : IIncrementalGenerator
         );
         stringBuilder.AppendLine($"global::{TypeFullNames.DbSession} session,");
         stringBuilder.AppendLine("string userId,");
-        stringBuilder.AppendLine("Guid transactionId,");
+        stringBuilder.AppendLine($"global::{TypeFullNames.Guid} transactionId,");
+        stringBuilder.AppendLine("bool isUseEvents,");
         stringBuilder.AppendLine($"global::{type.GetNamespace()}.Edit{type.Name}[] edits,");
         stringBuilder.AppendLine($"global::{TypeFullNames.CancellationToken} ct)");
         stringBuilder.AppendLine("{");
@@ -524,11 +539,14 @@ public class SourceEntityGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("await session.ExecuteNonQueryAsync(queries[i], ct);");
         stringBuilder.AppendLine("}");
         stringBuilder.AppendLine();
+        stringBuilder.AppendLine("if(isUseEvents)");
+        stringBuilder.AppendLine("{");
 
         stringBuilder.AppendLine(
             "await session.ExecuteNonQueryAsync(events.CreateInsertQuery(), ct);"
         );
 
+        stringBuilder.AppendLine("}");
         stringBuilder.AppendLine("}");
     }
 
@@ -542,7 +560,8 @@ public class SourceEntityGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("public static void AddEntities(");
         stringBuilder.AppendLine($"this global::{TypeFullNames.DbSession} session,");
         stringBuilder.AppendLine("string userId,");
-        stringBuilder.AppendLine("Guid transactionId,");
+        stringBuilder.AppendLine($"global::{TypeFullNames.Guid} transactionId,");
+        stringBuilder.AppendLine("bool isUseEvents,");
         stringBuilder.AppendLine($"params global::{type.GetRealFullName()}[] items)");
         stringBuilder.AppendLine("{");
         stringBuilder.AppendLine("var index = 0;");
@@ -582,7 +601,11 @@ public class SourceEntityGenerator : IIncrementalGenerator
 
         stringBuilder.AppendLine("}");
         stringBuilder.AppendLine();
-        stringBuilder.AppendLine($"session.ExecuteNonQuery(events.CreateInsertQuery());");
+        stringBuilder.AppendLine("if(isUseEvents)");
+        stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine("session.ExecuteNonQuery(events.CreateInsertQuery());");
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine();
         stringBuilder.AppendLine("session.ExecuteNonQuery(items.CreateInsertQuery());");
         stringBuilder.AppendLine("}");
     }
@@ -599,13 +622,14 @@ public class SourceEntityGenerator : IIncrementalGenerator
         );
         stringBuilder.AppendLine($"this global::{TypeFullNames.DbSession} session,");
         stringBuilder.AppendLine("string userId,");
-        stringBuilder.AppendLine("Guid transactionId,");
+        stringBuilder.AppendLine($"global::{TypeFullNames.Guid} transactionId,");
+        stringBuilder.AppendLine("bool isUseEvents,");
         stringBuilder.AppendLine($"global::{type.GetRealFullName()}[] items,");
         stringBuilder.AppendLine($"{TypeFullNames.CancellationToken} ct)");
         stringBuilder.AppendLine("{");
 
         stringBuilder.AppendLine(
-            "return session.AddEntitiesCore(userId, transactionId, items, ct).ConfigureAwait(false);"
+            "return session.AddEntitiesCore(userId, transactionId, isUseEvents, items, ct).ConfigureAwait(false);"
         );
 
         stringBuilder.AppendLine("}");
@@ -616,7 +640,8 @@ public class SourceEntityGenerator : IIncrementalGenerator
 
         stringBuilder.AppendLine($"this global::{TypeFullNames.DbSession} session,");
         stringBuilder.AppendLine("string userId,");
-        stringBuilder.AppendLine("Guid transactionId,");
+        stringBuilder.AppendLine($"global::{TypeFullNames.Guid} transactionId,");
+        stringBuilder.AppendLine("bool isUseEvents,");
         stringBuilder.AppendLine($"global::{type.GetRealFullName()}[] items,");
         stringBuilder.AppendLine($"{TypeFullNames.CancellationToken} ct)");
         stringBuilder.AppendLine("{");
@@ -657,10 +682,15 @@ public class SourceEntityGenerator : IIncrementalGenerator
 
         stringBuilder.AppendLine("}");
         stringBuilder.AppendLine();
+        stringBuilder.AppendLine("if(isUseEvents)");
+        stringBuilder.AppendLine("{");
 
         stringBuilder.AppendLine(
             "await session.ExecuteNonQueryAsync(events.CreateInsertQuery(), ct);"
         );
+
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine();
 
         stringBuilder.AppendLine(
             "await session.ExecuteNonQueryAsync(items.CreateInsertQuery(), ct);"

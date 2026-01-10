@@ -462,7 +462,7 @@ public class SqliteAdoGenerator : IIncrementalGenerator
         stringBuilder.AppendLine();
 
         stringBuilder.AppendLine(
-            "return new(DeleteQuery + \"WHERE id IN (\" + string.Join(\", \", parameters.Select(x => x.ParameterName)) + \")\", parameters);"
+            $"return new(DeleteQuery + \" WHERE {id.Name} IN (\" + string.Join(\", \", parameters.Select(x => x.ParameterName)) + \")\", parameters);"
         );
 
         stringBuilder.AppendLine("}");

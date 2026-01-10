@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Gaia.Helpers;
 using Gaia.Services;
-using Microsoft.Data.Sqlite;
 using Nestor.Db.Helpers;
 using Nestor.Db.Models;
 
@@ -16,14 +15,12 @@ public interface IDbService<in TGetRequest, in TPostRequest, TGetResponse, TPost
     where TGetResponse : IValidationErrors, new()
     where TPostResponse : IValidationErrors, new()
 {
-    ConfiguredValueTaskAwaitable SaveEventsAsync(
-        ReadOnlyMemory<EventEntity> events,
-        CancellationToken ct
-    );
-
-    void SaveEvents(ReadOnlyMemory<EventEntity> events);
-    ConfiguredValueTaskAwaitable<long> GetLastIdAsync(CancellationToken ct);
-    long GetLastId();
+    ConfiguredValueTaskAwaitable AddEventsAsync(EventEntity[] events, CancellationToken ct);
+    void AddEvents(EventEntity[] events);
+    ConfiguredValueTaskAwaitable<EventEntity[]> GetEventsAsync(CancellationToken ct);
+    EventEntity[] GetEvents();
+    ConfiguredValueTaskAwaitable ClearEventsAsync(CancellationToken ct);
+    void ClearEvents();
 }
 
 public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
@@ -31,13 +28,6 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
     where TGetResponse : IValidationErrors, new()
     where TPostResponse : IValidationErrors, new()
 {
-    protected readonly IDbConnectionFactory Factory;
-
-    protected DbService(IDbConnectionFactory factory)
-    {
-        Factory = factory;
-    }
-
     public abstract ConfiguredValueTaskAwaitable<TGetResponse> GetAsync(
         TGetRequest request,
         CancellationToken ct
@@ -52,79 +42,69 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
     public abstract TPostResponse Post(Guid idempotentId, TPostRequest request);
     public abstract TGetResponse Get(TGetRequest request);
 
-    public ConfiguredValueTaskAwaitable SaveEventsAsync(
-        ReadOnlyMemory<EventEntity> events,
-        CancellationToken ct
-    )
+    public ConfiguredValueTaskAwaitable AddEventsAsync(EventEntity[] events, CancellationToken ct)
     {
-        return SaveEventsCore(events, ct).ConfigureAwait(false);
+        return AddEventsCore(events, ct).ConfigureAwait(false);
     }
 
-    private async ValueTask SaveEventsCore(ReadOnlyMemory<EventEntity> events, CancellationToken ct)
+    public void AddEvents(EventEntity[] events)
     {
-        if (events.IsEmpty)
+        if (events.Length == 0)
         {
             return;
         }
 
-        await Factory.ExecuteNonQueryAsync(events.Span.CreateInsertQuery(), ct);
+        Factory.ExecuteNonQuery(events.CreateInsertQuery());
     }
 
-    public void SaveEvents(ReadOnlyMemory<EventEntity> events)
+    public ConfiguredValueTaskAwaitable<EventEntity[]> GetEventsAsync(CancellationToken ct)
     {
-        if (events.IsEmpty)
-        {
-            return;
-        }
-
-        Factory.ExecuteNonQuery(events.Span.CreateInsertQuery());
+        return GetEventsCore(ct).ConfigureAwait(false);
     }
 
-    public ConfiguredValueTaskAwaitable<long> GetLastIdAsync(CancellationToken ct)
+    public EventEntity[] GetEvents()
     {
-        return Factory.ExecuteScalarInt64Async("SELECT IFNULL(MAX(id), 0) FROM Events", ct);
-    }
-
-    public long GetLastId()
-    {
-        return Factory.ExecuteScalarInt64("SELECT IFNULL(MAX(id), 0) FROM Events");
-    }
-
-    protected ConfiguredValueTaskAwaitable<EventEntity[]> GetLastEventsAsync(
-        DbSession session,
-        long lastId,
-        CancellationToken ct
-    )
-    {
-        return GetLastEventsCore(session, lastId, ct).ConfigureAwait(false);
-    }
-
-    private async ValueTask<EventEntity[]> GetLastEventsCore(
-        DbSession session,
-        long lastId,
-        CancellationToken ct
-    )
-    {
-        await using var reader = await session.ExecuteReaderAsync(
-            CreateLastEventsQuery(lastId),
-            ct
-        );
-
-        return (await reader.ReadEventsAsync(ct).ToEnumerableAsync()).ToArray();
-    }
-
-    protected EventEntity[] GetLastEvents(DbSession session, long lastId)
-    {
-        using var reader = session.ExecuteReader(CreateLastEventsQuery(lastId));
+        using var reader = Factory.ExecuteReader(EventsExt.SelectQuery);
 
         return reader.ReadEvents().ToArray();
     }
 
-    private static SqlQuery CreateLastEventsQuery(long lastId)
+    public ConfiguredValueTaskAwaitable ClearEventsAsync(CancellationToken ct)
     {
-        return new(
-            $"{EventsExt.SelectQuery} WHERE Id > @LastId",
-            new SqliteParameter[] { new("@LastId", lastId) }
-        );
+        return ClearEventsCore(ct).ConfigureAwait(false);
+    }
+
+    public void ClearEvents()
+    {
+        Factory.ExecuteNonQuery(EventsExt.DeleteQuery);
+    }
+
+    public async ValueTask ClearEventsCore(CancellationToken ct)
+    {
+        await Factory.ExecuteNonQueryAsync(EventsExt.DeleteQuery, ct);
+    }
+
+    protected readonly IDbConnectionFactory Factory;
+
+    protected DbService(IDbConnectionFactory factory)
+    {
+        Factory = factory;
+    }
+
+    private async ValueTask<EventEntity[]> GetEventsCore(CancellationToken ct)
+    {
+        await using var reader = await Factory.ExecuteReaderAsync(EventsExt.SelectQuery, ct);
+
+        return (await reader.ReadEventsAsync(ct).ToEnumerableAsync()).ToArray();
+    }
+
+    private async ValueTask AddEventsCore(EventEntity[] events, CancellationToken ct)
+    {
+        if (events.Length == 0)
+        {
+            return;
+        }
+
+        await Factory.ExecuteNonQueryAsync(events.CreateInsertQuery(), ct);
     }
 }
