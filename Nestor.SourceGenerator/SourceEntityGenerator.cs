@@ -678,12 +678,12 @@ public class SourceEntityGenerator : IIncrementalGenerator
     {
         stringBuilder.AppendLine($"public class Edit{type.Name}");
         stringBuilder.AppendLine("{");
-        stringBuilder.AppendLine($"public Edit{type.Name}(global::System.Guid id)");
+        stringBuilder.AppendLine($"public Edit{type.Name}(global::{TypeFullNames.Guid} id)");
         stringBuilder.AppendLine("{");
         stringBuilder.AppendLine($"{id.Name} = id;");
         stringBuilder.AppendLine("}");
         stringBuilder.AppendLine();
-        stringBuilder.AppendLine($"public global::System.Guid {id.Name} {{ get; }}");
+        stringBuilder.AppendLine($"public global::{TypeFullNames.Guid} {id.Name} {{ get; }}");
 
         foreach (var property in properties)
         {
@@ -694,9 +694,18 @@ public class SourceEntityGenerator : IIncrementalGenerator
 
             stringBuilder.AppendLine($"public bool IsEdit{property.Name} {{ get; set; }}");
 
-            stringBuilder.AppendLine(
-                $"public global::{property.Type.GetRealFullName()} {property.Name} {{ get; set; }}"
-            );
+            if (property.Type.GetRealFullName() == TypeFullNames.String)
+            {
+                stringBuilder.AppendLine(
+                    $"public string {property.Name} {{ get; set; }} = string.Empty;"
+                );
+            }
+            else
+            {
+                stringBuilder.AppendLine(
+                    $"public global::{property.Type.GetRealFullName()} {property.Name} {{ get; set; }}"
+                );
+            }
         }
 
         stringBuilder.AppendLine();

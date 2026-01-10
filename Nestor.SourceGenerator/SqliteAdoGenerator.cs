@@ -126,7 +126,7 @@ public class SqliteAdoGenerator : IIncrementalGenerator
         foreach (var property in properties)
         {
             stringBuilder.AppendLine(
-                $"new global::{TypeFullNames.SqliteParameter}($\"@{{nameof(value.{property.Name})}}{{postfix}}\", ((object)value.{property.Name}) ?? global::{TypeFullNames.DBNull}.Value),"
+                $"new global::{TypeFullNames.SqliteParameter}($\"@{{nameof(value.{property.Name})}}{{postfix}}\", ((object?)value.{property.Name}) ?? global::{TypeFullNames.DBNull}.Value),"
             );
         }
 
@@ -277,7 +277,7 @@ public class SqliteAdoGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("{");
 
         stringBuilder.AppendLine(
-            $"parameters[i + 1] = new global::{TypeFullNames.SqliteParameter}($\"@{{updates[i].PropertyName}}\", ((object)updates[i].Value) ?? global::{TypeFullNames.DBNull}.Value);"
+            $"parameters[i + 1] = new global::{TypeFullNames.SqliteParameter}($\"@{{updates[i].PropertyName}}\", ((object?)updates[i].Value) ?? global::{TypeFullNames.DBNull}.Value);"
         );
 
         stringBuilder.AppendLine("}");
@@ -403,7 +403,11 @@ public class SqliteAdoGenerator : IIncrementalGenerator
         );
 
         stringBuilder.AppendLine($"this global::{TypeFullNames.DbDataReader} reader,");
-        stringBuilder.AppendLine($"global::{TypeFullNames.CancellationToken} ct)");
+
+        stringBuilder.AppendLine(
+            $"[global::{TypeFullNames.EnumeratorCancellation}]global::{TypeFullNames.CancellationToken} ct)"
+        );
+
         stringBuilder.AppendLine("{");
         stringBuilder.AppendLine("if(!reader.HasRows)");
         stringBuilder.AppendLine("{");

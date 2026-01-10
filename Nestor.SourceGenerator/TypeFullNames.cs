@@ -8,6 +8,10 @@ public static class TypeFullNames
     public const string ConfiguredCancelableAsyncEnumerable =
         "System.Runtime.CompilerServices.ConfiguredCancelableAsyncEnumerable";
 
+    public const string EnumeratorCancellation =
+        "System.Runtime.CompilerServices.EnumeratorCancellation";
+
+    public const string String = "System.String";
     public const string CancellationToken = "System.Threading.CancellationToken";
     public const string DbContext = "Microsoft.EntityFrameworkCore.DbContext";
     public const string NestorDbContext = "Nestor.Db.Services.NestorDbContext";
