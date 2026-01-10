@@ -15,8 +15,6 @@ public interface IDbService<in TGetRequest, in TPostRequest, TGetResponse, TPost
     where TGetResponse : IValidationErrors, new()
     where TPostResponse : IValidationErrors, new()
 {
-    ConfiguredValueTaskAwaitable AddEventsAsync(EventEntity[] events, CancellationToken ct);
-    void AddEvents(EventEntity[] events);
     ConfiguredValueTaskAwaitable<EventEntity[]> GetEventsAsync(CancellationToken ct);
     EventEntity[] GetEvents();
     ConfiguredValueTaskAwaitable ClearEventsAsync(CancellationToken ct);
@@ -27,34 +25,39 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
     : IDbService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
     where TGetResponse : IValidationErrors, new()
     where TPostResponse : IValidationErrors, new()
+    where TPostRequest : IPostRequest
 {
     public abstract ConfiguredValueTaskAwaitable<TGetResponse> GetAsync(
         TGetRequest request,
         CancellationToken ct
     );
 
-    public abstract ConfiguredValueTaskAwaitable<TPostResponse> PostAsync(
+    public abstract TGetResponse Get(TGetRequest request);
+
+    public ConfiguredValueTaskAwaitable<TPostResponse> PostAsync(
         Guid idempotentId,
         TPostRequest request,
         CancellationToken ct
-    );
-
-    public abstract TPostResponse Post(Guid idempotentId, TPostRequest request);
-    public abstract TGetResponse Get(TGetRequest request);
-
-    public ConfiguredValueTaskAwaitable AddEventsAsync(EventEntity[] events, CancellationToken ct)
+    )
     {
-        return AddEventsCore(events, ct).ConfigureAwait(false);
+        return PostCore(idempotentId, request, ct).ConfigureAwait(false);
     }
 
-    public void AddEvents(EventEntity[] events)
+    public TPostResponse Post(Guid idempotentId, TPostRequest request)
     {
-        if (events.Length == 0)
+        if (request.Events.Length == 0)
         {
-            return;
+            return Execute(idempotentId, request);
         }
 
-        Factory.ExecuteNonQuery(events.CreateInsertQuery());
+        foreach (var e in request.Events)
+        {
+            var query = e.ToSqlQuery();
+            Factory.ExecuteNonQuery(query);
+            Factory.ExecuteNonQuery(new[] { e }.CreateInsertQuery());
+        }
+
+        return Execute(idempotentId, request);
     }
 
     public ConfiguredValueTaskAwaitable<EventEntity[]> GetEventsAsync(CancellationToken ct)
@@ -86,9 +89,38 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
 
     protected readonly IDbConnectionFactory Factory;
 
+    protected abstract TPostResponse Execute(Guid idempotentId, TPostRequest request);
+
+    protected abstract ConfiguredValueTaskAwaitable<TPostResponse> ExecuteAsync(
+        Guid idempotentId,
+        TPostRequest request,
+        CancellationToken ct
+    );
+
     protected DbService(IDbConnectionFactory factory)
     {
         Factory = factory;
+    }
+
+    private async ValueTask<TPostResponse> PostCore(
+        Guid idempotentId,
+        TPostRequest request,
+        CancellationToken ct
+    )
+    {
+        if (request.Events.Length == 0)
+        {
+            return await ExecuteAsync(idempotentId, request, ct);
+        }
+
+        foreach (var e in request.Events)
+        {
+            var query = e.ToSqlQuery();
+            await Factory.ExecuteNonQueryAsync(query, ct);
+            await Factory.ExecuteNonQueryAsync(new[] { e }.CreateInsertQuery(), ct);
+        }
+
+        return await ExecuteAsync(idempotentId, request, ct);
     }
 
     private async ValueTask<EventEntity[]> GetEventsCore(CancellationToken ct)
@@ -96,15 +128,5 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
         await using var reader = await Factory.ExecuteReaderAsync(EventsExt.SelectQuery, ct);
 
         return (await reader.ReadEventsAsync(ct).ToEnumerableAsync()).ToArray();
-    }
-
-    private async ValueTask AddEventsCore(EventEntity[] events, CancellationToken ct)
-    {
-        if (events.Length == 0)
-        {
-            return;
-        }
-
-        await Factory.ExecuteNonQueryAsync(events.CreateInsertQuery(), ct);
     }
 }

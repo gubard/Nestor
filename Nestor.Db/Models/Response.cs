@@ -1,6 +1,3 @@
 ﻿namespace Nestor.Db.Models;
 
-public interface IResponse
-{
-    EventEntity[] Events { get; set; }
-}
+public interface IResponse;
