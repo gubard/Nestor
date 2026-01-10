@@ -18,11 +18,20 @@ public readonly struct DbSession : IDisposable, IAsyncDisposable
 
     public DbDataReader ExecuteReader(SqlQuery query)
     {
-        _command.CommandText = query.Sql;
-        _command.Parameters.Clear();
-        _command.Parameters.AddRange(query.Parameters);
+        try
+        {
+            _command.CommandText = query.Sql;
+            _command.Parameters.Clear();
+            _command.Parameters.AddRange(query.Parameters);
 
-        return _command.ExecuteReader();
+            return _command.ExecuteReader();
+        }
+        catch
+        {
+            Rollback();
+
+            throw;
+        }
     }
 
     public ConfiguredValueTaskAwaitable<DbDataReader> ExecuteReaderAsync(
@@ -35,12 +44,21 @@ public readonly struct DbSession : IDisposable, IAsyncDisposable
 
     public int ExecuteNonQuery(SqlQuery query)
     {
-        _command.CommandText = query.Sql;
-        _command.Parameters.Clear();
-        _command.Parameters.AddRange(query.Parameters);
-        var result = _command.ExecuteNonQuery();
+        try
+        {
+            _command.CommandText = query.Sql;
+            _command.Parameters.Clear();
+            _command.Parameters.AddRange(query.Parameters);
+            var result = _command.ExecuteNonQuery();
 
-        return Convert.ToInt32(result);
+            return Convert.ToInt32(result);
+        }
+        catch
+        {
+            Rollback();
+
+            throw;
+        }
     }
 
     public ConfiguredValueTaskAwaitable<int> ExecuteNonQueryAsync(
@@ -53,12 +71,21 @@ public readonly struct DbSession : IDisposable, IAsyncDisposable
 
     public int ExecuteScalarInt32(SqlQuery query)
     {
-        _command.CommandText = query.Sql;
-        _command.Parameters.Clear();
-        _command.Parameters.AddRange(query.Parameters);
-        var result = _command.ExecuteScalar();
+        try
+        {
+            _command.CommandText = query.Sql;
+            _command.Parameters.Clear();
+            _command.Parameters.AddRange(query.Parameters);
+            var result = _command.ExecuteScalar();
 
-        return Convert.ToInt32(result);
+            return Convert.ToInt32(result);
+        }
+        catch
+        {
+            Rollback();
+
+            throw;
+        }
     }
 
     public ConfiguredValueTaskAwaitable<int> ExecuteScalarInt32Async(
@@ -126,30 +153,57 @@ public readonly struct DbSession : IDisposable, IAsyncDisposable
 
     private async ValueTask<DbDataReader> ExecuteReaderCore(SqlQuery query, CancellationToken ct)
     {
-        _command.CommandText = query.Sql;
-        _command.Parameters.Clear();
-        _command.Parameters.AddRange(query.Parameters);
+        try
+        {
+            _command.CommandText = query.Sql;
+            _command.Parameters.Clear();
+            _command.Parameters.AddRange(query.Parameters);
 
-        return await _command.ExecuteReaderAsync(ct);
+            return await _command.ExecuteReaderAsync(ct);
+        }
+        catch
+        {
+            await RollbackAsync(ct);
+
+            throw;
+        }
     }
 
     private async ValueTask<int> ExecuteNonQueryCore(SqlQuery query, CancellationToken ct)
     {
-        _command.CommandText = query.Sql;
-        _command.Parameters.Clear();
-        _command.Parameters.AddRange(query.Parameters);
+        try
+        {
+            _command.CommandText = query.Sql;
+            _command.Parameters.Clear();
+            _command.Parameters.AddRange(query.Parameters);
 
-        return await _command.ExecuteNonQueryAsync(ct);
+            return await _command.ExecuteNonQueryAsync(ct);
+        }
+        catch
+        {
+            await RollbackAsync(ct);
+
+            throw;
+        }
     }
 
     private async ValueTask<int> ExecuteScalarInt32Core(SqlQuery query, CancellationToken ct)
     {
-        _command.CommandText = query.Sql;
-        _command.Parameters.Clear();
-        _command.Parameters.AddRange(query.Parameters);
-        var result = await _command.ExecuteScalarAsync(ct);
+        try
+        {
+            _command.CommandText = query.Sql;
+            _command.Parameters.Clear();
+            _command.Parameters.AddRange(query.Parameters);
+            var result = await _command.ExecuteScalarAsync(ct);
 
-        return Convert.ToInt32(result);
+            return Convert.ToInt32(result);
+        }
+        catch
+        {
+            await RollbackAsync(ct);
+
+            throw;
+        }
     }
 
     private async ValueTask RollbackCore(CancellationToken ct)
