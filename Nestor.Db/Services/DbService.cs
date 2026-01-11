@@ -23,7 +23,7 @@ public interface IDbService<in TGetRequest, in TPostRequest, TGetResponse, TPost
 public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
     : IDbService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
     where TGetResponse : IValidationErrors, new()
-    where TPostResponse : IValidationErrors, new()
+    where TPostResponse : IValidationErrors, IPostResponse, new()
     where TPostRequest : IPostRequest
 {
     public abstract ConfiguredValueTaskAwaitable<TGetResponse> GetAsync(
@@ -59,6 +59,7 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
 
     protected abstract ConfiguredValueTaskAwaitable<TPostResponse> ExecuteAsync(
         Guid idempotentId,
+        TPostResponse response,
         TPostRequest request,
         CancellationToken ct
     );
@@ -74,9 +75,11 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
         CancellationToken ct
     )
     {
+        var response = new TPostResponse();
+
         if (request.Events.Length == 0)
         {
-            return await ExecuteAsync(idempotentId, request, ct);
+            return await ExecuteAsync(idempotentId, response, request, ct);
         }
 
         await using var session = await Factory.CreateSessionAsync(ct);
@@ -106,8 +109,9 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
         }
 
         await session.CommitAsync(ct);
+        response.IsEventSaved = true;
 
-        return await ExecuteAsync(idempotentId, request, ct);
+        return await ExecuteAsync(idempotentId, response, request, ct);
     }
 
     private async ValueTask<EventEntity[]> GetEventsCore(CancellationToken ct)
