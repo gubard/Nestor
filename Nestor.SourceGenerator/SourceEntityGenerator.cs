@@ -84,6 +84,10 @@ public class SourceEntityGenerator : IIncrementalGenerator
                         CreateGetMethod(stringBuilder, type, id);
                         stringBuilder.AppendLine();
                         CreateGetMethodA(stringBuilder, type, id);
+                        stringBuilder.AppendLine();
+                        CreateExistsAMethod(stringBuilder, type, id);
+                        stringBuilder.AppendLine();
+                        CreateExistsMethod(stringBuilder, type, id);
                         stringBuilder.AppendLine("}");
                         stringBuilder.AppendLine();
                         CreateEditClass(stringBuilder, type, properties, id);
@@ -97,6 +101,96 @@ public class SourceEntityGenerator : IIncrementalGenerator
                 }
             }
         );
+    }
+
+    private void CreateExistsMethod(
+        CSharpStringBuilder stringBuilder,
+        INamedTypeSymbol type,
+        IPropertySymbol id
+    )
+    {
+        stringBuilder.AppendLine($"public static global::{id.Type.GetRealFullName()}[] IsExists(");
+        stringBuilder.AppendLine($"this global::{TypeFullNames.DbSession} session,");
+        stringBuilder.AppendLine($"global::{type.GetRealFullName()}[] items)");
+        stringBuilder.AppendLine("{");
+
+        stringBuilder.AppendLine(
+            $"var ids = new global::{TypeFullNames.List}<global::{TypeFullNames.Guid}>(items.Length);"
+        );
+
+        stringBuilder.AppendLine(
+            $"using var reader = session.ExecuteReader(items.Select(x => x.{id.Name}).ToArray().CreateSelectExists{type.GetTableName()}Query());"
+        );
+
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine("if(!reader.HasRows)");
+        stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine("return [];");
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine("while (reader.Read())");
+        stringBuilder.AppendLine("{");
+
+        stringBuilder.AppendLine(
+            $"ids.Add(global::{TypeFullNames.Guid}.Parse(reader.GetString(0)));"
+        );
+
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine("return ids.ToArray();");
+        stringBuilder.AppendLine("}");
+    }
+
+    private void CreateExistsAMethod(
+        CSharpStringBuilder stringBuilder,
+        INamedTypeSymbol type,
+        IPropertySymbol id
+    )
+    {
+        stringBuilder.AppendLine(
+            $"public static global::{TypeFullNames.ConfiguredValueTaskAwaitable}<global::{id.Type.GetRealFullName()}[]> IsExistsAsync("
+        );
+
+        stringBuilder.AppendLine($"this global::{TypeFullNames.DbSession} session,");
+        stringBuilder.AppendLine($"global::{type.GetRealFullName()}[] items,");
+        stringBuilder.AppendLine($"global::{TypeFullNames.CancellationToken} ct)");
+        stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine("return IsExistsCore(session, items, ct).ConfigureAwait(false);");
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine();
+
+        stringBuilder.AppendLine(
+            $"private static async global::{TypeFullNames.ValueTask}<global::{id.Type.GetRealFullName()}[]> IsExistsCore("
+        );
+
+        stringBuilder.AppendLine($"this global::{TypeFullNames.DbSession} session,");
+        stringBuilder.AppendLine($"global::{type.GetRealFullName()}[] items,");
+        stringBuilder.AppendLine($"global::{TypeFullNames.CancellationToken} ct)");
+        stringBuilder.AppendLine("{");
+
+        stringBuilder.AppendLine(
+            $"var ids = new global::{TypeFullNames.List}<global::{TypeFullNames.Guid}>(items.Length);"
+        );
+
+        stringBuilder.AppendLine(
+            $"using var reader = await session.ExecuteReaderAsync(items.Select(x => x.{id.Name}).ToArray().CreateSelectExists{type.GetTableName()}Query(), ct);"
+        );
+
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine("if(!reader.HasRows)");
+        stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine("return [];");
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine("while (await reader.ReadAsync(ct))");
+        stringBuilder.AppendLine("{");
+
+        stringBuilder.AppendLine(
+            $"ids.Add(global::{TypeFullNames.Guid}.Parse(reader.GetString(0)));"
+        );
+
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine("return ids.ToArray();");
+        stringBuilder.AppendLine("}");
     }
 
     private void CreateGetMethod(

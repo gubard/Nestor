@@ -93,6 +93,10 @@ public class SqliteAdoGenerator : IIncrementalGenerator
                     AddDeleteMethod(stringBuilder, type, id);
                     stringBuilder.AppendLine();
                     AddToByteArrayMethod(stringBuilder);
+                    stringBuilder.AppendLine();
+                    AddUpdateAllMethod(stringBuilder, type, id, properties);
+                    stringBuilder.AppendLine();
+                    AddExistsMethod(stringBuilder, type, id);
                     stringBuilder.AppendLine("}");
 
                     spc.AddSource($"SqliteAdo.{type}.g.cs", stringBuilder.ToString());
@@ -292,6 +296,70 @@ public class SqliteAdoGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("}");
     }
 
+    private void AddUpdateAllMethod(
+        CSharpStringBuilder stringBuilder,
+        INamedTypeSymbol type,
+        IPropertySymbol id,
+        IPropertySymbol[] properties
+    )
+    {
+        stringBuilder.AppendLine(
+            $"public static global::{TypeFullNames.SqlQuery} CreateUpdate{type.GetTableName()}Query("
+        );
+
+        stringBuilder.AppendLine($"this global::{type.GetRealFullName()} item)");
+        stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine("var parameters = item.GetSqliteParameters(string.Empty);");
+
+        stringBuilder.AppendLine(
+            $"var sql = $\"UPDATE {type.GetTableName()} SET {string.Join(", ", properties.Where(x => x.Name != id.Name).Select(x => $"{x.Name} = @{x.Name}"))} WHERE {id.Name} = @{id.Name}\";"
+        );
+
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine("return new(sql, parameters);");
+        stringBuilder.AppendLine("}");
+    }
+
+    private void AddExistsMethod(
+        CSharpStringBuilder stringBuilder,
+        INamedTypeSymbol type,
+        IPropertySymbol id
+    )
+    {
+        stringBuilder.AppendLine(
+            $"public const string SelectIdsQuery = \"SELECT {id.Name} FROM {type.GetTableName()}\";"
+        );
+
+        stringBuilder.AppendLine();
+
+        stringBuilder.AppendLine(
+            $"public static global::{TypeFullNames.SqlQuery} CreateSelectExists{type.GetTableName()}Query(this global::{id.Type.GetRealFullName()}[] ids)"
+        );
+
+        stringBuilder.AppendLine("{");
+
+        stringBuilder.AppendLine(
+            $"var parameters = new {TypeFullNames.SqliteParameter}[ids.Length];"
+        );
+
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine("for(var i = 0; i < ids.Length; i++)");
+        stringBuilder.AppendLine("{");
+
+        stringBuilder.AppendLine(
+            $"parameters[i] = new {TypeFullNames.SqliteParameter}($\"@Id{{i}}\", ids[i]);"
+        );
+
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine();
+
+        stringBuilder.AppendLine(
+            $"return new(SelectIdsQuery + \" WHERE {id.Name} IN (\" + string.Join(\", \", parameters.Select(x => x.ParameterName)) + \")\", parameters);"
+        );
+
+        stringBuilder.AppendLine("}");
+    }
+
     private void AddSelectMethod(
         CSharpStringBuilder stringBuilder,
         INamedTypeSymbol type,
@@ -326,7 +394,7 @@ public class SqliteAdoGenerator : IIncrementalGenerator
         stringBuilder.AppendLine();
 
         stringBuilder.AppendLine(
-            "return new(SelectQuery + \"WHERE id IN (\" + string.Join(\", \", parameters.Select(x => x.ParameterName)) + \")\", parameters);"
+            $"return new(SelectQuery + \"WHERE {id.Name} IN (\" + string.Join(\", \", parameters.Select(x => x.ParameterName)) + \")\", parameters);"
         );
 
         stringBuilder.AppendLine("}");

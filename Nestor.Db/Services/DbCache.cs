@@ -1,10 +1,31 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Threading;
+using Gaia.Services;
+using Nestor.Db.Models;
 
 namespace Nestor.Db.Services;
 
-public interface IDbCache<in TSource>
+public interface IDbCache<in TPostRequest, in TGetResponse> : ICache<TPostRequest, TGetResponse>;
+
+public abstract class DbCache<TPostRequest, TGetResponse> : IDbCache<TPostRequest, TGetResponse>
 {
-    ConfiguredValueTaskAwaitable UpdateAsync(TSource source, CancellationToken ct);
-    void Update(TSource source);
+    public abstract void Update(TPostRequest source);
+    public abstract void Update(TGetResponse source);
+
+    public abstract ConfiguredValueTaskAwaitable UpdateAsync(
+        TPostRequest source,
+        CancellationToken ct
+    );
+
+    public abstract ConfiguredValueTaskAwaitable UpdateAsync(
+        TGetResponse source,
+        CancellationToken ct
+    );
+
+    protected readonly IDbConnectionFactory Factory;
+
+    protected DbCache(IDbConnectionFactory factory)
+    {
+        Factory = factory;
+    }
 }
