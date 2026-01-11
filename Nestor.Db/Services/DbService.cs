@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Gaia.Helpers;
 using Gaia.Services;
+using Microsoft.Data.Sqlite;
 using Nestor.Db.Helpers;
 using Nestor.Db.Models;
 
@@ -82,6 +83,23 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
 
         foreach (var e in request.Events)
         {
+            var selectQuery = new SqlQuery(
+                $"SELECT Id FROM {e.GetTableName()} WHERE Id = @Id",
+                new SqliteParameter("@Id", e.EntityId)
+            );
+
+            var ids = await session.GetGuidAsync(selectQuery, ct);
+
+            if (ids.Length == 0)
+            {
+                var insetQuery = new SqlQuery(
+                    $"INSERT INTO {e.GetTableName()} (Id) VALUES (@Id)",
+                    new SqliteParameter("@Id", e.EntityId)
+                );
+
+                await session.ExecuteNonQueryAsync(insetQuery, ct);
+            }
+
             var query = e.ToSqlQuery();
             await session.ExecuteNonQueryAsync(query, ct);
             await session.ExecuteNonQueryAsync(new[] { e }.CreateInsertQuery(), ct);
