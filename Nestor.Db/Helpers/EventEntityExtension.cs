@@ -10,6 +10,19 @@ public static class EventEntityExtension
     {
         var tableName = e.GetTableName();
 
+        if (e.EntityProperty == "__IS_DELETED__" && e.EntityBooleanValue == true)
+        {
+            if (e.EntityBooleanValue == true)
+            {
+                return new(
+                    $"DELETE FROM {tableName} WHERE Id = @Id",
+                    new SqliteParameter("@Id", e.EntityId)
+                );
+            }
+
+            return InsertHelper.CreateDefaultInsert(e.EntityType, e.EntityId);
+        }
+
         return new(
             $"UPDATE {tableName} SET {e.EntityProperty} = @Value WHERE Id = @Id",
             new SqliteParameter("@Id", e.EntityId),

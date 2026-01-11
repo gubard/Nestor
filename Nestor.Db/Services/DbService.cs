@@ -95,11 +95,7 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
 
             if (ids.Length == 0)
             {
-                var insetQuery = new SqlQuery(
-                    $"INSERT INTO {e.GetTableName()} (Id) VALUES (@Id)",
-                    new SqliteParameter("@Id", e.EntityId)
-                );
-
+                var insetQuery = InsertHelper.CreateDefaultInsert(e.EntityType, e.EntityId);
                 await session.ExecuteNonQueryAsync(insetQuery, ct);
             }
 
@@ -116,8 +112,10 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
 
     private async ValueTask<EventEntity[]> GetEventsCore(CancellationToken ct)
     {
-        await using var reader = await Factory.ExecuteReaderAsync(EventsExt.SelectQuery, ct);
+        await using var session = await Factory.CreateSessionAsync(ct);
+        await using var reader = await session.ExecuteReaderAsync(EventsExt.SelectQuery, ct);
+        var events = await reader.ReadEventsAsync(ct).ToEnumerableAsync();
 
-        return (await reader.ReadEventsAsync(ct).ToEnumerableAsync()).ToArray();
+        return events.ToArray();
     }
 }
