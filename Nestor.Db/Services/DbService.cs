@@ -16,9 +16,7 @@ public interface IDbService<in TGetRequest, in TPostRequest, TGetResponse, TPost
     where TPostResponse : IValidationErrors, new()
 {
     ConfiguredValueTaskAwaitable<EventEntity[]> GetEventsAsync(CancellationToken ct);
-    EventEntity[] GetEvents();
     ConfiguredValueTaskAwaitable ClearEventsAsync(CancellationToken ct);
-    void ClearEvents();
 }
 
 public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
@@ -32,8 +30,6 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
         CancellationToken ct
     );
 
-    public abstract TGetResponse Get(TGetRequest request);
-
     public ConfiguredValueTaskAwaitable<TPostResponse> PostAsync(
         Guid idempotentId,
         TPostRequest request,
@@ -43,43 +39,14 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
         return PostCore(idempotentId, request, ct).ConfigureAwait(false);
     }
 
-    public TPostResponse Post(Guid idempotentId, TPostRequest request)
-    {
-        if (request.Events.Length == 0)
-        {
-            return Execute(idempotentId, request);
-        }
-
-        foreach (var e in request.Events)
-        {
-            var query = e.ToSqlQuery();
-            Factory.ExecuteNonQuery(query);
-            Factory.ExecuteNonQuery(new[] { e }.CreateInsertQuery());
-        }
-
-        return Execute(idempotentId, request);
-    }
-
     public ConfiguredValueTaskAwaitable<EventEntity[]> GetEventsAsync(CancellationToken ct)
     {
         return GetEventsCore(ct).ConfigureAwait(false);
     }
 
-    public EventEntity[] GetEvents()
-    {
-        using var reader = Factory.ExecuteReader(EventsExt.SelectQuery);
-
-        return reader.ReadEvents().ToArray();
-    }
-
     public ConfiguredValueTaskAwaitable ClearEventsAsync(CancellationToken ct)
     {
         return ClearEventsCore(ct).ConfigureAwait(false);
-    }
-
-    public void ClearEvents()
-    {
-        Factory.ExecuteNonQuery(EventsExt.DeleteQuery);
     }
 
     public async ValueTask ClearEventsCore(CancellationToken ct)
@@ -88,8 +55,6 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
     }
 
     protected readonly IDbConnectionFactory Factory;
-
-    protected abstract TPostResponse Execute(Guid idempotentId, TPostRequest request);
 
     protected abstract ConfiguredValueTaskAwaitable<TPostResponse> ExecuteAsync(
         Guid idempotentId,
@@ -113,12 +78,16 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
             return await ExecuteAsync(idempotentId, request, ct);
         }
 
+        await using var session = await Factory.CreateSessionAsync(ct);
+
         foreach (var e in request.Events)
         {
             var query = e.ToSqlQuery();
-            await Factory.ExecuteNonQueryAsync(query, ct);
-            await Factory.ExecuteNonQueryAsync(new[] { e }.CreateInsertQuery(), ct);
+            await session.ExecuteNonQueryAsync(query, ct);
+            await session.ExecuteNonQueryAsync(new[] { e }.CreateInsertQuery(), ct);
         }
+
+        await session.CommitAsync(ct);
 
         return await ExecuteAsync(idempotentId, request, ct);
     }

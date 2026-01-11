@@ -9,9 +9,6 @@ public interface IDbCache<in TPostRequest, in TGetResponse> : ICache<TPostReques
 
 public abstract class DbCache<TPostRequest, TGetResponse> : IDbCache<TPostRequest, TGetResponse>
 {
-    public abstract void Update(TPostRequest source);
-    public abstract void Update(TGetResponse source);
-
     public abstract ConfiguredValueTaskAwaitable UpdateAsync(
         TPostRequest source,
         CancellationToken ct
