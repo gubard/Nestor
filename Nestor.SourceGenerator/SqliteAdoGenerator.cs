@@ -394,7 +394,7 @@ public class SqliteAdoGenerator : IIncrementalGenerator
         stringBuilder.AppendLine();
 
         stringBuilder.AppendLine(
-            $"return new(SelectQuery + \"WHERE {id.Name} IN (\" + string.Join(\", \", parameters.Select(x => x.ParameterName)) + \")\", parameters);"
+            $"return new(SelectQuery + \" WHERE {id.Name} IN (\" + string.Join(\", \", parameters.Select(x => x.ParameterName)) + \")\", parameters);"
         );
 
         stringBuilder.AppendLine("}");
