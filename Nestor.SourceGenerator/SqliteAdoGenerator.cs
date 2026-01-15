@@ -333,6 +333,12 @@ public class SqliteAdoGenerator : IIncrementalGenerator
         stringBuilder.AppendLine();
 
         stringBuilder.AppendLine(
+            $"public const string SelectCountQuery = \"SELECT COUNT(*) FROM {type.GetTableName()}\";"
+        );
+
+        stringBuilder.AppendLine();
+
+        stringBuilder.AppendLine(
             $"public static global::{TypeFullNames.SqlQuery} CreateSelectExists{type.GetTableName()}Query(this global::{id.Type.GetRealFullName()}[] ids)"
         );
 
