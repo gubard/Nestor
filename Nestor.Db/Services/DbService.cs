@@ -50,11 +50,6 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
         return ClearEventsCore(ct).ConfigureAwait(false);
     }
 
-    public async ValueTask ClearEventsCore(CancellationToken ct)
-    {
-        await Factory.ExecuteNonQueryAsync(EventsExt.DeleteQuery, ct);
-    }
-
     protected readonly IDbConnectionFactory Factory;
 
     protected abstract ConfiguredValueTaskAwaitable<TPostResponse> ExecuteAsync(
@@ -64,10 +59,18 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
         CancellationToken ct
     );
 
-    protected DbService(IDbConnectionFactory factory)
+    protected DbService(IDbConnectionFactory factory, params string[] eventEntityTypes)
     {
         Factory = factory;
+        _eventEntityTypes = eventEntityTypes.ToArray();
     }
+
+    private async ValueTask ClearEventsCore(CancellationToken ct)
+    {
+        await Factory.ExecuteNonQueryAsync(EventsExt.DeleteQuery, ct);
+    }
+
+    private readonly string[] _eventEntityTypes;
 
     private async ValueTask<TPostResponse> PostCore(
         Guid idempotentId,
@@ -113,7 +116,16 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
     private async ValueTask<EventEntity[]> GetEventsCore(CancellationToken ct)
     {
         await using var session = await Factory.CreateSessionAsync(ct);
-        await using var reader = await session.ExecuteReaderAsync(EventsExt.SelectQuery, ct);
+
+        await using var reader = await session.ExecuteReaderAsync(
+            new(
+                EventsExt.SelectQuery
+                    + $" WHERE EntityType IN ({_eventEntityTypes.ToParameterNames("EntityType")})",
+                _eventEntityTypes.ToSqliteParameters("EntityType")
+            ),
+            ct
+        );
+
         var events = await reader.ReadEventsAsync(ct).ToEnumerableAsync();
 
         return events.ToArray();
