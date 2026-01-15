@@ -3,6 +3,7 @@ using System.Data.Common;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Nestor.Db.Exceptions;
 using Nestor.Db.Models;
 
 namespace Nestor.Db.Services;
@@ -179,11 +180,11 @@ public readonly struct DbSession : IDisposable, IAsyncDisposable
 
             return await _command.ExecuteNonQueryAsync(ct);
         }
-        catch
+        catch (Exception e)
         {
             await RollbackAsync(ct);
 
-            throw;
+            throw new SqlException(query, e);
         }
     }
 
