@@ -6,7 +6,7 @@ namespace Nestor.Db.Exceptions;
 public sealed class SqlException : Exception
 {
     public SqlException(SqlQuery query, Exception inner)
-        : base(query.Sql, inner)
+        : base($"{inner.Message}{Environment.NewLine}{query.Sql}", inner)
     {
         Query = query;
     }
