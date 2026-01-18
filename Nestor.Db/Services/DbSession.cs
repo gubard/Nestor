@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Data.Common;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -70,6 +71,14 @@ public readonly struct DbSession : IDisposable, IAsyncDisposable
         return ExecuteNonQueryCore(query, ct).ConfigureAwait(false);
     }
 
+    public ConfiguredValueTaskAwaitable<int?> TryExecuteNonQueryAsync(
+        SqlQuery query,
+        CancellationToken ct
+    )
+    {
+        return TryExecuteNonQueryCore(query, ct).ConfigureAwait(false);
+    }
+
     public int ExecuteScalarInt32(SqlQuery query)
     {
         try
@@ -131,21 +140,25 @@ public readonly struct DbSession : IDisposable, IAsyncDisposable
         await _transaction.DisposeAsync();
     }
 
-    public static DbSession Create(DbConnection connection)
+    public static DbSession Create(
+        DbConnection connection,
+        IsolationLevel isolationLevel = IsolationLevel.Unspecified
+    )
     {
         var command = connection.CreateCommand();
         connection.Open();
-        command.Transaction = connection.BeginTransaction();
+        command.Transaction = connection.BeginTransaction(isolationLevel);
 
         return new(connection, command, command.Transaction);
     }
 
     public static ConfiguredValueTaskAwaitable<DbSession> CreateAsync(
         DbConnection connection,
-        CancellationToken ct
+        CancellationToken ct,
+        IsolationLevel isolationLevel = IsolationLevel.Unspecified
     )
     {
-        return CreateCore(connection, ct).ConfigureAwait(false);
+        return CreateCore(connection, ct, isolationLevel).ConfigureAwait(false);
     }
 
     private readonly DbConnection _connection;
@@ -188,6 +201,22 @@ public readonly struct DbSession : IDisposable, IAsyncDisposable
         }
     }
 
+    private async ValueTask<int?> TryExecuteNonQueryCore(SqlQuery query, CancellationToken ct)
+    {
+        try
+        {
+            _command.CommandText = query.Sql;
+            _command.Parameters.Clear();
+            _command.Parameters.AddRange(query.Parameters);
+
+            return await _command.ExecuteNonQueryAsync(ct);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     private async ValueTask<int> ExecuteScalarInt32Core(SqlQuery query, CancellationToken ct)
     {
         try
@@ -219,12 +248,13 @@ public readonly struct DbSession : IDisposable, IAsyncDisposable
 
     private static async ValueTask<DbSession> CreateCore(
         DbConnection connection,
-        CancellationToken ct
+        CancellationToken ct,
+        IsolationLevel isolationLevel = IsolationLevel.Unspecified
     )
     {
         var command = connection.CreateCommand();
         await connection.OpenAsync(ct);
-        command.Transaction = await connection.BeginTransactionAsync(ct);
+        command.Transaction = await connection.BeginTransactionAsync(isolationLevel, ct);
 
         return new(connection, command, command.Transaction);
     }

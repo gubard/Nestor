@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Data.Common;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -13,14 +14,17 @@ public static class DbConnectionFactoryExtension
     extension<TDbConnectionFactory>(TDbConnectionFactory factory)
         where TDbConnectionFactory : IDbConnectionFactory
     {
-        public DbSession CreateSession()
+        public DbSession CreateSession(IsolationLevel isolationLevel = IsolationLevel.Unspecified)
         {
-            return DbSession.Create(factory.Create());
+            return DbSession.Create(factory.Create(), isolationLevel);
         }
 
-        public ConfiguredValueTaskAwaitable<DbSession> CreateSessionAsync(CancellationToken ct)
+        public ConfiguredValueTaskAwaitable<DbSession> CreateSessionAsync(
+            CancellationToken ct,
+            IsolationLevel isolationLevel = IsolationLevel.Unspecified
+        )
         {
-            return DbSession.CreateAsync(factory.Create(), ct);
+            return DbSession.CreateAsync(factory.Create(), ct, isolationLevel);
         }
 
         public bool IsCanConnect(SqlQuery query)
