@@ -739,6 +739,11 @@ public class SourceEntityGenerator : IIncrementalGenerator
         stringBuilder.AppendLine($"global::{type.GetRealFullName()}[] items,");
         stringBuilder.AppendLine($"{TypeFullNames.CancellationToken} ct)");
         stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine("if(items.Length == 0)");
+        stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine("return;");
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine();
         stringBuilder.AppendLine("var index = 0;");
 
         stringBuilder.AppendLine(
