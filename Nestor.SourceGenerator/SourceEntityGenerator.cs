@@ -800,7 +800,7 @@ public class SourceEntityGenerator : IIncrementalGenerator
         IPropertySymbol id
     )
     {
-        stringBuilder.AppendLine($"public class Edit{type.Name}");
+        stringBuilder.AppendLine($"public partial class Edit{type.Name}");
         stringBuilder.AppendLine("{");
         stringBuilder.AppendLine($"public Edit{type.Name}(global::{TypeFullNames.Guid} id)");
         stringBuilder.AppendLine("{");
