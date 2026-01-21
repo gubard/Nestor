@@ -55,6 +55,16 @@ CREATE TABLE IF NOT EXISTS Events (
 );
 "
             },
+            {
+                18,
+                @"
+CREATE TABLE IF NOT EXISTS Objects (
+    Key TEXT PRIMARY KEY NOT NULL,
+    Content BLOB NOT NULL,
+    ContentType TEXT NOT NULL
+);
+"
+            },
         }.ToFrozenDictionary();
     }
 }
