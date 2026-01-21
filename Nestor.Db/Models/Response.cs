@@ -1,6 +1,8 @@
-﻿namespace Nestor.Db.Models;
+﻿using Gaia.Services;
 
-public interface IResponse;
+namespace Nestor.Db.Models;
+
+public interface IResponse : IValidationErrors;
 
 public interface IPostResponse : IResponse
 {
