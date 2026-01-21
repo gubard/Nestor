@@ -19,7 +19,8 @@ public sealed class DbObjectStorage : IObjectStorage
         _serializer = serializer;
     }
 
-    public ConfiguredValueTaskAwaitable<T?> LoadAsync<T>(string key, CancellationToken ct)
+    public ConfiguredValueTaskAwaitable<T> LoadAsync<T>(string key, CancellationToken ct)
+        where T : new()
     {
         return LoadCore<T>(key, ct).ConfigureAwait(false);
     }
@@ -32,9 +33,12 @@ public sealed class DbObjectStorage : IObjectStorage
     private readonly IDbConnectionFactory _factory;
     private readonly ISerializer _serializer;
 
-    private async ValueTask<T?> LoadCore<T>(string key, CancellationToken ct)
+    private async ValueTask<T> LoadCore<T>(string key, CancellationToken ct)
+        where T : new()
     {
-        await using var reader = await _factory.ExecuteReaderAsync(
+        await using var session = await _factory.CreateSessionAsync(ct);
+
+        await using var reader = await session.ExecuteReaderAsync(
             new(ObjectsExt.SelectQuery + " WHERE Key = @Key", new SqliteParameter("@Key", key)),
             ct
         );
@@ -43,18 +47,20 @@ public sealed class DbObjectStorage : IObjectStorage
 
         if (objs.Length == 0)
         {
-            return default;
+            return new();
         }
 
         await using var stream = new MemoryStream(objs[0].Content);
         stream.Position = 0;
 
-        return await _serializer.DeserializeAsync<T>(stream, ct);
+        return await _serializer.DeserializeAsync<T>(stream, ct) ?? new();
     }
 
     private async ValueTask SaveCore(string key, object obj, CancellationToken ct)
     {
-        var count = await _factory.ExecuteScalarInt32Async(
+        await using var session = await _factory.CreateSessionAsync(ct);
+
+        var count = await session.ExecuteScalarInt32Async(
             new(
                 ObjectsExt.SelectCountQuery + " WHERE Key = @Key",
                 new SqliteParameter("@Key", key)
@@ -75,9 +81,9 @@ public sealed class DbObjectStorage : IObjectStorage
 
         if (count == 0)
         {
-            await _factory.ExecuteNonQueryAsync(new[] { entity }.CreateInsertQuery(), ct);
+            await session.ExecuteNonQueryAsync(new[] { entity }.CreateInsertQuery(), ct);
         }
 
-        await _factory.ExecuteNonQueryAsync(entity.CreateUpdateObjectsQuery(), ct);
+        await session.ExecuteNonQueryAsync(entity.CreateUpdateObjectsQuery(), ct);
     }
 }
