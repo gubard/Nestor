@@ -85,5 +85,6 @@ public sealed class DbObjectStorage : IObjectStorage
         }
 
         await session.ExecuteNonQueryAsync(entity.CreateUpdateObjectsQuery(), ct);
+        await session.CommitAsync(ct);
     }
 }
