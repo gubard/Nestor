@@ -136,6 +136,7 @@ public static class Extensions
             "decimal" => "System." + nameof(Decimal),
             "char" => "System." + nameof(Char),
             "string" => "System." + nameof(String),
+            "byte[]" => "System." + nameof(Byte) + "[]",
             { } s => s,
         };
     }

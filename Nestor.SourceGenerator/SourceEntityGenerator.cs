@@ -822,17 +822,24 @@ public class SourceEntityGenerator : IIncrementalGenerator
             }
 
             stringBuilder.AppendLine($"public bool IsEdit{property.Name} {{ get; set; }}");
+            var realFullName = property.Type.GetRealFullName();
 
-            if (property.Type.GetRealFullName() == TypeFullNames.String)
+            if (realFullName == TypeFullNames.String)
             {
                 stringBuilder.AppendLine(
                     $"public string {property.Name} {{ get; set; }} = string.Empty;"
                 );
             }
+            else if (realFullName.EndsWith("[]"))
+            {
+                stringBuilder.AppendLine(
+                    $"public global::{realFullName} {property.Name} {{ get; set; }} = [];"
+                );
+            }
             else
             {
                 stringBuilder.AppendLine(
-                    $"public global::{property.Type.GetRealFullName()} {property.Name} {{ get; set; }}"
+                    $"public global::{realFullName} {property.Name} {{ get; set; }}"
                 );
             }
         }
