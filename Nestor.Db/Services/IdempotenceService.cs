@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Gaia.Helpers;
 using Gaia.Services;
-using Microsoft.Data.Sqlite;
 using Nestor.Db.Helpers;
 using Nestor.Db.Models;
 
