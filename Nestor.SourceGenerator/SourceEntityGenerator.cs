@@ -119,7 +119,7 @@ public class SourceEntityGenerator : IIncrementalGenerator
         );
 
         stringBuilder.AppendLine(
-            $"using var reader = session.ExecuteReader(items.Select(x => x.{id.Name}).ToArray().CreateSelectExists{type.GetTableName()}Query());"
+            $"using var reader = session.ExecuteReader(items.Select(x => x.{id.Name}).ToArray().CreateSelectExists{type.GetTableName()}Query(session));"
         );
 
         stringBuilder.AppendLine();
@@ -172,7 +172,7 @@ public class SourceEntityGenerator : IIncrementalGenerator
         );
 
         stringBuilder.AppendLine(
-            $"using var reader = await session.ExecuteReaderAsync(items.Select(x => x.{id.Name}).ToArray().CreateSelectExists{type.GetTableName()}Query(), ct);"
+            $"using var reader = await session.ExecuteReaderAsync(items.Select(x => x.{id.Name}).ToArray().CreateSelectExists{type.GetTableName()}Query(session), ct);"
         );
 
         stringBuilder.AppendLine();
@@ -236,7 +236,7 @@ public class SourceEntityGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("{");
 
         stringBuilder.AppendLine(
-            $"return Get{type.GetTableName()}(session, ids.CreateSelect{type.GetTableName()}Query());"
+            $"return Get{type.GetTableName()}(session, ids.CreateSelect{type.GetTableName()}Query(session));"
         );
 
         stringBuilder.AppendLine("}");
@@ -313,7 +313,7 @@ public class SourceEntityGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("{");
 
         stringBuilder.AppendLine(
-            $"return Get{type.GetTableName()}Async(session, ids.CreateSelect{type.GetTableName()}Query(), ct);"
+            $"return Get{type.GetTableName()}Async(session, ids.CreateSelect{type.GetTableName()}Query(session), ct);"
         );
 
         stringBuilder.AppendLine("}");
@@ -351,12 +351,12 @@ public class SourceEntityGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("EntityProperty = \"__IS_DELETED__\",");
         stringBuilder.AppendLine("EntityBooleanValue = true,");
         stringBuilder.AppendLine("CreatedAt = now,");
-        stringBuilder.AppendLine("}).ToArray().CreateInsertQuery());");
+        stringBuilder.AppendLine("}).ToArray().CreateInsertQuery(session));");
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("}");
 
         stringBuilder.AppendLine(
-            $"session.ExecuteNonQuery(ids.CreateDelete{type.GetTableName()}Query());"
+            $"session.ExecuteNonQuery(ids.CreateDelete{type.GetTableName()}Query(session));"
         );
 
         stringBuilder.AppendLine("}");
@@ -417,12 +417,12 @@ public class SourceEntityGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("EntityProperty = \"__IS_DELETED__\",");
         stringBuilder.AppendLine("EntityBooleanValue = true,");
         stringBuilder.AppendLine("CreatedAt = now,");
-        stringBuilder.AppendLine("}).ToArray().CreateInsertQuery(), ct);");
+        stringBuilder.AppendLine("}).ToArray().CreateInsertQuery(session), ct);");
         stringBuilder.AppendLine("}");
         stringBuilder.AppendLine();
 
         stringBuilder.AppendLine(
-            $"await session.ExecuteNonQueryAsync(ids.CreateDelete{type.GetTableName()}Query(), ct);"
+            $"await session.ExecuteNonQueryAsync(ids.CreateDelete{type.GetTableName()}Query(session), ct);"
         );
 
         stringBuilder.AppendLine("}");
@@ -506,7 +506,7 @@ public class SourceEntityGenerator : IIncrementalGenerator
         }
 
         stringBuilder.AppendLine(
-            $"queries[i] = edit.{id.Name}.CreateUpdate{type.GetTableName()}Query(updates);"
+            $"queries[i] = edit.{id.Name}.CreateUpdate{type.GetTableName()}Query(session, updates);"
         );
 
         stringBuilder.AppendLine("}");
@@ -518,7 +518,7 @@ public class SourceEntityGenerator : IIncrementalGenerator
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("if(isUseEvents)");
         stringBuilder.AppendLine("{");
-        stringBuilder.AppendLine("session.ExecuteNonQuery(events.CreateInsertQuery());");
+        stringBuilder.AppendLine("session.ExecuteNonQuery(events.CreateInsertQuery(session));");
         stringBuilder.AppendLine("}");
         stringBuilder.AppendLine("}");
     }
@@ -623,7 +623,7 @@ public class SourceEntityGenerator : IIncrementalGenerator
         }
 
         stringBuilder.AppendLine(
-            $"queries[i] = edit.{id.Name}.CreateUpdate{type.GetTableName()}Query(updates);"
+            $"queries[i] = edit.{id.Name}.CreateUpdate{type.GetTableName()}Query(session, updates);"
         );
 
         stringBuilder.AppendLine("}");
@@ -637,7 +637,7 @@ public class SourceEntityGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("{");
 
         stringBuilder.AppendLine(
-            "await session.ExecuteNonQueryAsync(events.CreateInsertQuery(), ct);"
+            "await session.ExecuteNonQueryAsync(events.CreateInsertQuery(session), ct);"
         );
 
         stringBuilder.AppendLine("}");
@@ -697,10 +697,10 @@ public class SourceEntityGenerator : IIncrementalGenerator
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("if(isUseEvents)");
         stringBuilder.AppendLine("{");
-        stringBuilder.AppendLine("session.ExecuteNonQuery(events.CreateInsertQuery());");
+        stringBuilder.AppendLine("session.ExecuteNonQuery(events.CreateInsertQuery(session));");
         stringBuilder.AppendLine("}");
         stringBuilder.AppendLine();
-        stringBuilder.AppendLine("session.ExecuteNonQuery(items.CreateInsertQuery());");
+        stringBuilder.AppendLine("session.ExecuteNonQuery(items.CreateInsertQuery(session));");
         stringBuilder.AppendLine("}");
     }
 
@@ -785,14 +785,14 @@ public class SourceEntityGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("{");
 
         stringBuilder.AppendLine(
-            "await session.ExecuteNonQueryAsync(events.CreateInsertQuery(), ct);"
+            "await session.ExecuteNonQueryAsync(events.CreateInsertQuery(session), ct);"
         );
 
         stringBuilder.AppendLine("}");
         stringBuilder.AppendLine();
 
         stringBuilder.AppendLine(
-            "await session.ExecuteNonQueryAsync(items.CreateInsertQuery(), ct);"
+            "await session.ExecuteNonQueryAsync(items.CreateInsertQuery(session), ct);"
         );
 
         stringBuilder.AppendLine("}");

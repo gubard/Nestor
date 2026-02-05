@@ -53,7 +53,7 @@ public sealed class Migrator : IMigrator
                     new MigrationEntity[]
                     {
                         new() { Id = migration.Key, Sql = migration.Value },
-                    }.CreateInsertQuery()
+                    }.CreateInsertQuery(session)
                 );
             }
 
@@ -72,7 +72,7 @@ public sealed class Migrator : IMigrator
                     new MigrationEntity[]
                     {
                         new() { Id = migration.Key, Sql = migration.Value },
-                    }.CreateInsertQuery()
+                    }.CreateInsertQuery(session)
                 );
             }
 
@@ -115,7 +115,7 @@ public sealed class Migrator : IMigrator
                     new MigrationEntity[]
                     {
                         new() { Id = migration.Key, Sql = migration.Value },
-                    }.CreateInsertQuery(),
+                    }.CreateInsertQuery(session),
                     ct
                 );
             }
@@ -135,7 +135,7 @@ public sealed class Migrator : IMigrator
                     new MigrationEntity[]
                     {
                         new() { Id = migration.Key, Sql = migration.Value },
-                    }.CreateInsertQuery(),
+                    }.CreateInsertQuery(session),
                     ct
                 );
             }

@@ -1,12 +1,13 @@
 ﻿using System;
 using Microsoft.Data.Sqlite;
 using Nestor.Db.Models;
+using Nestor.Db.Services;
 
 namespace Nestor.Db.Helpers;
 
 public static class EventEntityExtension
 {
-    public static SqlQuery ToSqlQuery(this EventEntity e)
+    public static SqlQuery ToSqlQuery(this EventEntity e, DbSession session)
     {
         var tableName = e.GetTableName();
 
@@ -16,17 +17,17 @@ public static class EventEntityExtension
             {
                 return new(
                     $"DELETE FROM {tableName} WHERE Id = @Id",
-                    new SqliteParameter("@Id", e.EntityId)
+                    session.CreateParameter("@Id", e.EntityId)
                 );
             }
 
-            return InsertHelper.CreateDefaultInsert(e.EntityType, e.EntityId);
+            return InsertHelper.CreateDefaultInsert(e.EntityType, e.EntityId, session);
         }
 
         return new(
             $"UPDATE {tableName} SET {e.EntityProperty} = @Value WHERE Id = @Id",
-            new SqliteParameter("@Id", e.EntityId),
-            new SqliteParameter(
+            session.CreateParameter("@Id", e.EntityId),
+            session.CreateParameter(
                 "@Value",
                 e.EntityBooleanValue
                     ?? e.EntityByteArrayValue
@@ -49,8 +50,7 @@ public static class EventEntityExtension
                     ?? e.EntityTimeSpanValue
                     ?? e.EntityUInt16Value
                     ?? e.EntityUInt32Value
-                    ?? e.EntityUInt64Value
-                    ?? (object)DBNull.Value
+                    ?? (object?)e.EntityUInt64Value
             )
         );
     }

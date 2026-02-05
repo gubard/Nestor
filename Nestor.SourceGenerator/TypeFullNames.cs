@@ -24,6 +24,7 @@ public static class TypeFullNames
     public const string ArgumentOutOfRangeException = "System.ArgumentOutOfRangeException";
     public const string ArgumentException = "System.ArgumentException";
     public const string SqliteParameter = "Microsoft.Data.Sqlite.SqliteParameter";
+    public const string DbParameter = "System.Data.Common.DbParameter";
     public const string SqlQuery = "Nestor.Db.Models.SqlQuery";
     public const string UpdateProperty = "Nestor.Db.Models.UpdateProperty";
     public const string Span = "System.Span";

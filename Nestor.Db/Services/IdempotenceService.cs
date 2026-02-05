@@ -56,7 +56,7 @@ public sealed class IdempotenceService : IIdempotenceService
             Id = id,
         };
 
-        await session.ExecuteNonQueryAsync(new[] { item }.CreateInsertQuery(), ct);
+        await session.ExecuteNonQueryAsync(new[] { item }.CreateInsertQuery(session), ct);
         await session.CommitAsync(ct);
     }
 

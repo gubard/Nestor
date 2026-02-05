@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.Sqlite;
 using Nestor.Db.Models;
 using Nestor.Db.Services;
 
@@ -10,6 +12,22 @@ namespace Nestor.Db.Helpers;
 
 public static class DbSessionExtension
 {
+    public static DbParameter[] ToDbParameters<T>(
+        this DbSession dbSession,
+        T[] items,
+        string parameterName
+    )
+    {
+        var result = new DbParameter[items.Length];
+
+        for (var i = 0; i < result.Length; i++)
+        {
+            result[i] = dbSession.CreateParameter($"@{parameterName}{i}", items[i]);
+        }
+
+        return result;
+    }
+
     public static ConfiguredValueTaskAwaitable<Guid[]> GetGuidAsync(
         this DbSession session,
         SqlQuery query,
