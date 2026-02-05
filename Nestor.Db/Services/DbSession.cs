@@ -18,6 +18,15 @@ public readonly struct DbSession : IDisposable, IAsyncDisposable
         _transaction = transaction;
     }
 
+    public DbParameter CreateParameter(string name, object? value)
+    {
+        var parameter = _command.CreateParameter();
+        parameter.ParameterName = name;
+        parameter.Value = value ?? DBNull.Value;
+
+        return parameter;
+    }
+
     public DbDataReader ExecuteReader(SqlQuery query)
     {
         try
