@@ -4,7 +4,6 @@ using System.Data.Common;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Data.Sqlite;
 using Nestor.Db.Models;
 using Nestor.Db.Services;
 

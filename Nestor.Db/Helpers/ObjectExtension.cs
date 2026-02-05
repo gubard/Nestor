@@ -1,6 +1,4 @@
-﻿using System.Data.Common;
-using Gaia.Helpers;
-using Microsoft.Data.Sqlite;
+﻿using Gaia.Helpers;
 
 namespace Nestor.Db.Helpers;
 
