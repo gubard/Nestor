@@ -51,7 +51,7 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
 
     protected readonly IDbConnectionFactory Factory;
 
-    protected abstract ConfiguredValueTaskAwaitable<TPostResponse> ExecuteAsync(
+    protected abstract ConfiguredValueTaskAwaitable ExecuteAsync(
         Guid idempotentId,
         TPostResponse response,
         TPostRequest request,
@@ -81,7 +81,9 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
 
         if (request.Events.Length == 0)
         {
-            return await ExecuteAsync(idempotentId, response, request, ct);
+            await ExecuteAsync(idempotentId, response, request, ct);
+
+            return response;
         }
 
         await using var session = await Factory.CreateSessionAsync(ct);
@@ -113,8 +115,9 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
 
         await session.CommitAsync(ct);
         response.IsEventSaved = true;
+        await ExecuteAsync(idempotentId, response, request, ct);
 
-        return await ExecuteAsync(idempotentId, response, request, ct);
+        return response;
     }
 
     private async ValueTask<EventEntity[]> GetEventsCore(CancellationToken ct)
