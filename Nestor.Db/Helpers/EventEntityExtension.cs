@@ -5,7 +5,7 @@ namespace Nestor.Db.Helpers;
 
 public static class EventEntityExtension
 {
-    public static SqlQuery ToSqlQuery(this EventEntity e, DbSession session)
+    public static SqlQuery ToSqlQuery(this EventEntity e)
     {
         var tableName = e.GetTableName();
 
@@ -15,17 +15,17 @@ public static class EventEntityExtension
             {
                 return new(
                     $"DELETE FROM {tableName} WHERE Id = @Id",
-                    session.CreateParameter("@Id", e.EntityId)
+                    new QueryParameter("@Id", e.EntityId)
                 );
             }
 
-            return InsertHelper.CreateDefaultInsert(e.EntityType, e.EntityId, session);
+            return InsertHelper.CreateDefaultInsert(e.EntityType, e.EntityId);
         }
 
         return new(
             $"UPDATE {tableName} SET {e.EntityProperty} = @Value WHERE Id = @Id",
-            session.CreateParameter("@Id", e.EntityId),
-            session.CreateParameter(
+            new QueryParameter("@Id", e.EntityId),
+            new QueryParameter(
                 "@Value",
                 e.EntityBooleanValue
                     ?? e.EntityByteArrayValue

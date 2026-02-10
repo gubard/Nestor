@@ -112,12 +112,11 @@ public class SqliteAdoGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"public static global::{TypeFullNames.DbParameter}[] GetDbParameters("
+            $"public static global::{TypeFullNames.QueryParameter}[] GetDbParameters("
         );
 
         stringBuilder.AppendLine($"this global::{type} value,");
         stringBuilder.AppendLine("string postfix,");
-        stringBuilder.AppendLine($"global::{TypeFullNames.DbSession} session,");
 
         stringBuilder.AppendLine(
             $"params global::{TypeFullNames.ReadOnlySpan}<string> propertyNames)"
@@ -131,7 +130,7 @@ public class SqliteAdoGenerator : IIncrementalGenerator
         foreach (var property in properties)
         {
             stringBuilder.AppendLine(
-                $"session.CreateParameter($\"@{{nameof(value.{property.Name})}}{{postfix}}\", value.{property.Name}),"
+                $"new global::{TypeFullNames.QueryParameter}($\"@{{nameof(value.{property.Name})}}{{postfix}}\", value.{property.Name}),"
             );
         }
 
@@ -140,7 +139,7 @@ public class SqliteAdoGenerator : IIncrementalGenerator
         stringBuilder.AppendLine();
 
         stringBuilder.AppendLine(
-            $"var parameters = new global::{TypeFullNames.DbParameter}[propertyNames.Length];"
+            $"var parameters = new global::{TypeFullNames.QueryParameter}[propertyNames.Length];"
         );
 
         stringBuilder.AppendLine();
@@ -148,7 +147,7 @@ public class SqliteAdoGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("{");
 
         stringBuilder.AppendLine(
-            $"parameters[i] = session.CreateParameter($\"@{{propertyNames[i]}}{{postfix}}\", value.GetPropertyValue(propertyNames[i]));"
+            $"parameters[i] = new global::{TypeFullNames.QueryParameter}($\"@{{{{propertyNames[i]}}}}{{{{postfix}}}}\", value.GetPropertyValue(propertyNames[i]));"
         );
 
         stringBuilder.AppendLine("}");
@@ -202,18 +201,15 @@ public class SqliteAdoGenerator : IIncrementalGenerator
             $"public static global::{TypeFullNames.SqlQuery} CreateInsertQuery("
         );
 
-        stringBuilder.AppendLine(
-            $"this global::{type}[] values, global::{TypeFullNames.DbSession} session)"
-        );
-
+        stringBuilder.AppendLine($"this global::{type}[] values)");
         stringBuilder.AppendLine("{");
-        stringBuilder.AppendLine("return CreateInsertQuery(values.AsSpan(), session);");
+        stringBuilder.AppendLine("return CreateInsertQuery(values.AsSpan());");
         stringBuilder.AppendLine("}");
         stringBuilder.AppendLine();
         stringBuilder.AppendLine($"public static {TypeFullNames.SqlQuery} CreateInsertQuery(");
 
         stringBuilder.AppendLine(
-            $"this global::{TypeFullNames.ReadOnlySpan}<global::{type}> values, global::{TypeFullNames.DbSession} session)"
+            $"this global::{TypeFullNames.ReadOnlySpan}<global::{type}> values)"
         );
 
         stringBuilder.AppendLine("{");
@@ -224,7 +220,7 @@ public class SqliteAdoGenerator : IIncrementalGenerator
         stringBuilder.AppendLine();
 
         stringBuilder.AppendLine(
-            $"var parameters = new global::{TypeFullNames.List}<{TypeFullNames.DbParameter}>(values.Length * {properties.Length});"
+            $"var parameters = new global::{TypeFullNames.List}<{TypeFullNames.QueryParameter}>(values.Length * {properties.Length});"
         );
 
         stringBuilder.AppendLine("var valueNames = new string[values.Length];");
@@ -237,9 +233,7 @@ public class SqliteAdoGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("for(var i = 0; i < values.Length; i++)");
         stringBuilder.AppendLine("{");
 
-        stringBuilder.AppendLine(
-            "parameters.AddRange(values[i].GetDbParameters(i.ToString(), session));"
-        );
+        stringBuilder.AppendLine("parameters.AddRange(values[i].GetDbParameters(i.ToString()));");
 
         stringBuilder.AppendLine(
             $"valueNames[i] = $\"({string.Join(", ", properties.Select(x => $"@{x.Name}{{i}}"))})\";"
@@ -264,7 +258,6 @@ public class SqliteAdoGenerator : IIncrementalGenerator
         );
 
         stringBuilder.AppendLine($"this global::{id.Type.GetRealFullName()} id,");
-        stringBuilder.AppendLine($"global::{TypeFullNames.DbSession} session,");
 
         stringBuilder.AppendLine(
             $"params {TypeFullNames.ReadOnlySpan}<global::{TypeFullNames.UpdateProperty}> updates)"
@@ -273,16 +266,18 @@ public class SqliteAdoGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("{");
 
         stringBuilder.AppendLine(
-            $"var parameters = new global::{TypeFullNames.DbParameter}[updates.Length + 1];"
+            $"var parameters = new global::{TypeFullNames.QueryParameter}[updates.Length + 1];"
         );
 
-        stringBuilder.AppendLine($"parameters[0] = session.CreateParameter(\"@{id.Name}\", id);");
+        stringBuilder.AppendLine(
+            $"parameters[0] = new global::{TypeFullNames.QueryParameter}(\"@{id.Name}\", id);"
+        );
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("for(var i = 0; i < updates.Length; i++)");
         stringBuilder.AppendLine("{");
 
         stringBuilder.AppendLine(
-            "parameters[i + 1] = session.CreateParameter($\"@{updates[i].PropertyName}\", updates[i].Value);"
+            $"parameters[i + 1] = new global::{TypeFullNames.QueryParameter}($\"@{{updates[i].PropertyName}}\", updates[i].Value);"
         );
 
         stringBuilder.AppendLine("}");
@@ -308,12 +303,9 @@ public class SqliteAdoGenerator : IIncrementalGenerator
             $"public static global::{TypeFullNames.SqlQuery} CreateUpdate{type.GetTableName()}Query("
         );
 
-        stringBuilder.AppendLine(
-            $"this global::{type.GetRealFullName()} item, global::{TypeFullNames.DbSession} session)"
-        );
-
+        stringBuilder.AppendLine($"this global::{type.GetRealFullName()} item)");
         stringBuilder.AppendLine("{");
-        stringBuilder.AppendLine("var parameters = item.GetDbParameters(string.Empty, session);");
+        stringBuilder.AppendLine("var parameters = item.GetDbParameters(string.Empty);");
 
         stringBuilder.AppendLine(
             $"var sql = $\"UPDATE {type.GetTableName()} SET {string.Join(", ", properties.Where(x => x.Name != id.Name).Select(x => $"{x.Name} = @{x.Name}"))} WHERE {id.Name} = @{id.Name}\";"
@@ -343,22 +335,28 @@ public class SqliteAdoGenerator : IIncrementalGenerator
         stringBuilder.AppendLine();
 
         stringBuilder.AppendLine(
-            $"public static global::{TypeFullNames.SqlQuery} CreateSelectExists{type.GetTableName()}Query(this global::{id.Type.GetRealFullName()}[] ids, global::{TypeFullNames.DbSession} session)"
+            $"public static global::{TypeFullNames.SqlQuery} CreateSelectExists{type.GetTableName()}Query(this global::{id.Type.GetRealFullName()}[] ids)"
         );
 
         stringBuilder.AppendLine("{");
 
-        stringBuilder.AppendLine($"var parameters = new {TypeFullNames.DbParameter}[ids.Length];");
+        stringBuilder.AppendLine(
+            $"var parameters = new global::{TypeFullNames.QueryParameter}[ids.Length];"
+        );
 
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("for(var i = 0; i < ids.Length; i++)");
         stringBuilder.AppendLine("{");
-        stringBuilder.AppendLine("parameters[i] = session.CreateParameter($\"@Id{i}\", ids[i]);");
+
+        stringBuilder.AppendLine(
+            $"parameters[i] = new global::{TypeFullNames.QueryParameter}($\"@Id{{i}}\", ids[i]);"
+        );
+
         stringBuilder.AppendLine("}");
         stringBuilder.AppendLine();
 
         stringBuilder.AppendLine(
-            $"return new(SelectIdsQuery + \" WHERE {id.Name} IN (\" + string.Join(\", \", parameters.Select(x => x.ParameterName)) + \")\", parameters);"
+            $"return new(SelectIdsQuery + \" WHERE {id.Name} IN (\" + string.Join(\", \", parameters.Select(x => x.Name)) + \")\", parameters);"
         );
 
         stringBuilder.AppendLine("}");
@@ -377,20 +375,24 @@ public class SqliteAdoGenerator : IIncrementalGenerator
         stringBuilder.AppendLine();
 
         stringBuilder.AppendLine(
-            $"public static global::{TypeFullNames.SqlQuery} CreateSelect{type.GetTableName()}Query(this global::{id.Type.GetRealFullName()}[] ids, global::{TypeFullNames.DbSession} session)"
+            $"public static global::{TypeFullNames.SqlQuery} CreateSelect{type.GetTableName()}Query(this global::{id.Type.GetRealFullName()}[] ids)"
         );
 
         stringBuilder.AppendLine("{");
-        stringBuilder.AppendLine($"var parameters = new {TypeFullNames.DbParameter}[ids.Length];");
+        stringBuilder.AppendLine(
+            $"var parameters = new global::{TypeFullNames.QueryParameter}[ids.Length];"
+        );
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("for(var i = 0; i < ids.Length; i++)");
         stringBuilder.AppendLine("{");
-        stringBuilder.AppendLine("parameters[i] = session.CreateParameter($\"@Id{i}\", ids[i]);");
+        stringBuilder.AppendLine(
+            $"parameters[i] = new global::{TypeFullNames.QueryParameter}($\"@Id{{i}}\", ids[i]);"
+        );
         stringBuilder.AppendLine("}");
         stringBuilder.AppendLine();
 
         stringBuilder.AppendLine(
-            $"return new(SelectQuery + \" WHERE {id.Name} IN (\" + string.Join(\", \", parameters.Select(x => x.ParameterName)) + \")\", parameters);"
+            $"return new(SelectQuery + \" WHERE {id.Name} IN (\" + string.Join(\", \", parameters.Select(x => x.Name)) + \")\", parameters);"
         );
 
         stringBuilder.AppendLine("}");
@@ -509,23 +511,26 @@ public class SqliteAdoGenerator : IIncrementalGenerator
             $"public static {TypeFullNames.SqlQuery} CreateDelete{type.GetTableName()}Query("
         );
 
-        stringBuilder.AppendLine(
-            $"this global::{id.Type.GetRealFullName()}[] ids, global::{TypeFullNames.DbSession} session)"
-        );
-
+        stringBuilder.AppendLine($"this global::{id.Type.GetRealFullName()}[] ids)");
         stringBuilder.AppendLine("{");
 
-        stringBuilder.AppendLine($"var parameters = new {TypeFullNames.DbParameter}[ids.Length];");
+        stringBuilder.AppendLine(
+            $"var parameters = new global::{TypeFullNames.QueryParameter}[ids.Length];"
+        );
 
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("for(var i = 0; i < ids.Length; i++)");
         stringBuilder.AppendLine("{");
-        stringBuilder.AppendLine("parameters[i] = session.CreateParameter($\"@Id{i}\", ids[i]);");
+
+        stringBuilder.AppendLine(
+            $"parameters[i] = new global::{TypeFullNames.QueryParameter}($\"@Id{{i}}\", ids[i]);"
+        );
+
         stringBuilder.AppendLine("}");
         stringBuilder.AppendLine();
 
         stringBuilder.AppendLine(
-            $"return new(DeleteQuery + \" WHERE {id.Name} IN (\" + string.Join(\", \", parameters.Select(x => x.ParameterName)) + \")\", parameters);"
+            $"return new(DeleteQuery + \" WHERE {id.Name} IN (\" + string.Join(\", \", parameters.Select(x => x.Name)) + \")\", parameters);"
         );
 
         stringBuilder.AppendLine("}");

@@ -11,6 +11,7 @@ public static class TypeFullNames
     public const string EnumeratorCancellation =
         "System.Runtime.CompilerServices.EnumeratorCancellation";
 
+    public const string QueryParameter = "Nestor.Db.Models.QueryParameter";
     public const string String = "System.String";
     public const string CancellationToken = "System.Threading.CancellationToken";
     public const string DbContext = "Microsoft.EntityFrameworkCore.DbContext";

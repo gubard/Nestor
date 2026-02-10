@@ -11,17 +11,13 @@ namespace Nestor.Db.Helpers;
 
 public static class DbSessionExtension
 {
-    public static DbParameter[] ToDbParameters<T>(
-        this DbSession dbSession,
-        T[] items,
-        string parameterName
-    )
+    public static QueryParameter[] ToQueryParameters<T>(this T[] items, string parameterName)
     {
-        var result = new DbParameter[items.Length];
+        var result = new QueryParameter[items.Length];
 
         for (var i = 0; i < result.Length; i++)
         {
-            result[i] = dbSession.CreateParameter($"@{parameterName}{i}", items[i]);
+            result[i] = new QueryParameter($"@{parameterName}{i}", items[i]);
         }
 
         return result;

@@ -92,25 +92,20 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
         {
             var selectQuery = new SqlQuery(
                 $"SELECT Id FROM {e.GetTableName()} WHERE Id = @Id",
-                session.CreateParameter("@Id", e.EntityId)
+                new QueryParameter("@Id", e.EntityId)
             );
 
             var ids = await session.GetGuidAsync(selectQuery, ct);
 
             if (ids.Length == 0)
             {
-                var insetQuery = InsertHelper.CreateDefaultInsert(
-                    e.EntityType,
-                    e.EntityId,
-                    session
-                );
-
+                var insetQuery = InsertHelper.CreateDefaultInsert(e.EntityType, e.EntityId);
                 await session.ExecuteNonQueryAsync(insetQuery, ct);
             }
 
-            var query = e.ToSqlQuery(session);
+            var query = e.ToSqlQuery();
             await session.ExecuteNonQueryAsync(query, ct);
-            await session.ExecuteNonQueryAsync(new[] { e }.CreateInsertQuery(session), ct);
+            await session.ExecuteNonQueryAsync(new[] { e }.CreateInsertQuery(), ct);
         }
 
         await session.CommitAsync(ct);
@@ -128,7 +123,7 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
             new(
                 EventsExt.SelectQuery
                     + $" WHERE EntityType IN ({_eventEntityTypes.ToParameterNames("EntityType")})",
-                session.ToDbParameters(_eventEntityTypes, "EntityType")
+                _eventEntityTypes.ToQueryParameters("EntityType")
             ),
             ct
         );

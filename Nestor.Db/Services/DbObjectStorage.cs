@@ -38,7 +38,7 @@ public sealed class DbObjectStorage : IObjectStorage
         await using var session = await _factory.CreateSessionAsync(ct);
 
         await using var reader = await session.ExecuteReaderAsync(
-            new(ObjectsExt.SelectQuery + " WHERE Key = @Key", session.CreateParameter("@Key", key)),
+            new(ObjectsExt.SelectQuery + " WHERE Key = @Key", new QueryParameter("@Key", key)),
             ct
         );
 
@@ -60,10 +60,7 @@ public sealed class DbObjectStorage : IObjectStorage
         await using var session = await _factory.CreateSessionAsync(ct);
 
         var count = await session.ExecuteScalarInt32Async(
-            new(
-                ObjectsExt.SelectCountQuery + " WHERE Key = @Key",
-                session.CreateParameter("@Key", key)
-            ),
+            new(ObjectsExt.SelectCountQuery + " WHERE Key = @Key", new QueryParameter("@Key", key)),
             ct
         );
 
@@ -80,10 +77,10 @@ public sealed class DbObjectStorage : IObjectStorage
 
         if (count == 0)
         {
-            await session.ExecuteNonQueryAsync(new[] { entity }.CreateInsertQuery(session), ct);
+            await session.ExecuteNonQueryAsync(new[] { entity }.CreateInsertQuery(), ct);
         }
 
-        await session.ExecuteNonQueryAsync(entity.CreateUpdateObjectsQuery(session), ct);
+        await session.ExecuteNonQueryAsync(entity.CreateUpdateObjectsQuery(), ct);
         await session.CommitAsync(ct);
     }
 }

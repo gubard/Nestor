@@ -56,7 +56,7 @@ public sealed class IdempotenceService : IIdempotenceService
             Id = id,
         };
 
-        await session.ExecuteNonQueryAsync(new[] { item }.CreateInsertQuery(session), ct);
+        await session.ExecuteNonQueryAsync(new[] { item }.CreateInsertQuery(), ct);
         await session.CommitAsync(ct);
     }
 
@@ -67,7 +67,7 @@ public sealed class IdempotenceService : IIdempotenceService
 
         var query = new SqlQuery(
             IdempotentsExt.SelectQuery + " WHERE Id = @Id",
-            session.CreateParameter("@Id", id)
+            new QueryParameter("@Id", id)
         );
 
         await using var reader = await session.ExecuteReaderAsync(query, ct);

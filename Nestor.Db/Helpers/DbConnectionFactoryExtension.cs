@@ -35,7 +35,7 @@ public static class DbConnectionFactoryExtension
                 using var command = connection.CreateCommand();
                 command.CommandText = query.Sql;
                 command.Parameters.Clear();
-                command.Parameters.AddRange(query.Parameters);
+                command.Parameters.AddRange(query.CreateParameters(command));
                 connection.Open();
                 command.ExecuteNonQuery();
 
@@ -61,7 +61,7 @@ public static class DbConnectionFactoryExtension
             using var command = connection.CreateCommand();
             command.CommandText = query.Sql;
             command.Parameters.Clear();
-            command.Parameters.AddRange(query.Parameters);
+            command.Parameters.AddRange(query.CreateParameters(command));
             connection.Open();
 
             return command.ExecuteReader();
@@ -81,7 +81,7 @@ public static class DbConnectionFactoryExtension
             using var command = connection.CreateCommand();
             command.CommandText = query.Sql;
             command.Parameters.Clear();
-            command.Parameters.AddRange(query.Parameters);
+            command.Parameters.AddRange(query.CreateParameters(command));
             connection.Open();
             var result = command.ExecuteScalar();
 
@@ -102,7 +102,7 @@ public static class DbConnectionFactoryExtension
             using var command = connection.CreateCommand();
             command.CommandText = query.Sql;
             command.Parameters.Clear();
-            command.Parameters.AddRange(query.Parameters);
+            command.Parameters.AddRange(query.CreateParameters(command));
             connection.Open();
             var result = command.ExecuteScalar();
 
@@ -123,7 +123,7 @@ public static class DbConnectionFactoryExtension
             using var command = connection.CreateCommand();
             command.CommandText = query.Sql;
             command.Parameters.Clear();
-            command.Parameters.AddRange(query.Parameters);
+            command.Parameters.AddRange(query.CreateParameters(command));
             connection.Open();
 
             return command.ExecuteNonQuery();
@@ -143,7 +143,7 @@ public static class DbConnectionFactoryExtension
             await using var command = connection.CreateCommand();
             command.CommandText = query.Sql;
             command.Parameters.Clear();
-            command.Parameters.AddRange(query.Parameters);
+            command.Parameters.AddRange(query.CreateParameters(command));
             await connection.OpenAsync(ct);
 
             return await command.ExecuteReaderAsync(ct);
@@ -157,7 +157,7 @@ public static class DbConnectionFactoryExtension
                 await using var command = connection.CreateCommand();
                 command.CommandText = query.Sql;
                 command.Parameters.Clear();
-                command.Parameters.AddRange(query.Parameters);
+                command.Parameters.AddRange(query.CreateParameters(command));
                 await connection.OpenAsync(ct);
                 await command.ExecuteNonQueryAsync(ct);
 
@@ -175,7 +175,7 @@ public static class DbConnectionFactoryExtension
             await using var command = connection.CreateCommand();
             command.CommandText = query.Sql;
             command.Parameters.Clear();
-            command.Parameters.AddRange(query.Parameters);
+            command.Parameters.AddRange(query.CreateParameters(command));
             await connection.OpenAsync(ct);
             var rowCount = await command.ExecuteNonQueryAsync(ct);
 
@@ -188,7 +188,7 @@ public static class DbConnectionFactoryExtension
             await using var command = connection.CreateCommand();
             command.CommandText = query.Sql;
             command.Parameters.Clear();
-            command.Parameters.AddRange(query.Parameters);
+            command.Parameters.AddRange(query.CreateParameters(command));
             await connection.OpenAsync(ct);
             var result = await command.ExecuteScalarAsync(ct);
 
@@ -201,7 +201,7 @@ public static class DbConnectionFactoryExtension
             await using var command = connection.CreateCommand();
             command.CommandText = query.Sql;
             command.Parameters.Clear();
-            command.Parameters.AddRange(query.Parameters);
+            command.Parameters.AddRange(query.CreateParameters(command));
             await connection.OpenAsync(ct);
             var result = await command.ExecuteScalarAsync(ct);
 

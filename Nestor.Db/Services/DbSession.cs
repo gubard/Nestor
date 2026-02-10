@@ -18,22 +18,13 @@ public readonly struct DbSession : IDisposable, IAsyncDisposable
         _transaction = transaction;
     }
 
-    public DbParameter CreateParameter(string name, object? value)
-    {
-        var parameter = _command.CreateParameter();
-        parameter.ParameterName = name;
-        parameter.Value = value ?? DBNull.Value;
-
-        return parameter;
-    }
-
     public DbDataReader ExecuteReader(SqlQuery query)
     {
         try
         {
             _command.CommandText = query.Sql;
             _command.Parameters.Clear();
-            _command.Parameters.AddRange(query.Parameters);
+            _command.Parameters.AddRange(query.CreateParameters(_command));
 
             return _command.ExecuteReader();
         }
@@ -59,7 +50,7 @@ public readonly struct DbSession : IDisposable, IAsyncDisposable
         {
             _command.CommandText = query.Sql;
             _command.Parameters.Clear();
-            _command.Parameters.AddRange(query.Parameters);
+            _command.Parameters.AddRange(query.CreateParameters(_command));
             var result = _command.ExecuteNonQuery();
 
             return Convert.ToInt32(result);
@@ -94,7 +85,7 @@ public readonly struct DbSession : IDisposable, IAsyncDisposable
         {
             _command.CommandText = query.Sql;
             _command.Parameters.Clear();
-            _command.Parameters.AddRange(query.Parameters);
+            _command.Parameters.AddRange(query.CreateParameters(_command));
             var result = _command.ExecuteScalar();
 
             return Convert.ToInt32(result);
@@ -180,7 +171,7 @@ public readonly struct DbSession : IDisposable, IAsyncDisposable
         {
             _command.CommandText = query.Sql;
             _command.Parameters.Clear();
-            _command.Parameters.AddRange(query.Parameters);
+            _command.Parameters.AddRange(query.CreateParameters(_command));
 
             return await _command.ExecuteReaderAsync(ct);
         }
@@ -198,7 +189,7 @@ public readonly struct DbSession : IDisposable, IAsyncDisposable
         {
             _command.CommandText = query.Sql;
             _command.Parameters.Clear();
-            _command.Parameters.AddRange(query.Parameters);
+            _command.Parameters.AddRange(query.CreateParameters(_command));
 
             return await _command.ExecuteNonQueryAsync(ct);
         }
@@ -216,7 +207,7 @@ public readonly struct DbSession : IDisposable, IAsyncDisposable
         {
             _command.CommandText = query.Sql;
             _command.Parameters.Clear();
-            _command.Parameters.AddRange(query.Parameters);
+            _command.Parameters.AddRange(query.CreateParameters(_command));
 
             return await _command.ExecuteNonQueryAsync(ct);
         }
@@ -232,7 +223,7 @@ public readonly struct DbSession : IDisposable, IAsyncDisposable
         {
             _command.CommandText = query.Sql;
             _command.Parameters.Clear();
-            _command.Parameters.AddRange(query.Parameters);
+            _command.Parameters.AddRange(query.CreateParameters(_command));
             var result = await _command.ExecuteScalarAsync(ct);
 
             return Convert.ToInt32(result);
