@@ -3,7 +3,7 @@
 namespace Nestor.SourceGenerator;
 
 [Generator]
-public class SqliteAdoGenerator : IIncrementalGenerator
+public sealed class SqliteAdoGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {

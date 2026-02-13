@@ -2,7 +2,7 @@
 
 namespace Nestor.Db.Models;
 
-public class DbServiceOptionsFactory : IFactory<DbServiceOptions>
+public sealed class DbServiceOptionsFactory : IFactory<DbServiceOptions>
 {
     private readonly DbServiceOptions _options;
 

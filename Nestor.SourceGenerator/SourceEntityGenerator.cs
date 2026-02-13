@@ -3,7 +3,7 @@
 namespace Nestor.SourceGenerator;
 
 [Generator]
-public class SourceEntityGenerator : IIncrementalGenerator
+public sealed class SourceEntityGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -805,7 +805,7 @@ public class SourceEntityGenerator : IIncrementalGenerator
         IPropertySymbol id
     )
     {
-        stringBuilder.AppendLine($"public partial class Edit{type.Name}");
+        stringBuilder.AppendLine($"public sealed partial class Edit{type.Name}");
         stringBuilder.AppendLine("{");
         stringBuilder.AppendLine($"public Edit{type.Name}(global::{TypeFullNames.Guid} id)");
         stringBuilder.AppendLine("{");

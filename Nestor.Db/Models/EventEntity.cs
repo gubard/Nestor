@@ -2,7 +2,7 @@ using System;
 
 namespace Nestor.Db.Models;
 
-public class EventEntity
+public sealed class EventEntity
 {
     public long Id { get; set; }
     public Guid EntityId { get; set; }

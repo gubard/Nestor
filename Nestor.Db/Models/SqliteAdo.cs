@@ -3,7 +3,7 @@
 namespace Nestor.Db.Models;
 
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
-public class SqliteAdo : Attribute
+public sealed class SqliteAdo : Attribute
 {
     public SqliteAdo(Type type, string idName, bool isAutoIncrementId)
     {

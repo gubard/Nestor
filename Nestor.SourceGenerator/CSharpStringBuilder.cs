@@ -2,7 +2,7 @@
 
 namespace Nestor.SourceGenerator;
 
-public class CSharpStringBuilder
+public sealed class CSharpStringBuilder
 {
     private readonly StringBuilder _stringBuilder = new();
     private readonly int _indentSize;

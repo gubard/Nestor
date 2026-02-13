@@ -3,7 +3,7 @@ using System;
 namespace Nestor.Db.Models;
 
 [AttributeUsage(AttributeTargets.Assembly)]
-public class SourceEntity : Attribute
+public sealed class SourceEntity : Attribute
 {
     public SourceEntity(Type type, string idName)
     {
