@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,7 +16,7 @@ public static class DbSessionExtension
 
         for (var i = 0; i < result.Length; i++)
         {
-            result[i] = new QueryParameter($"@{parameterName}{i}", items[i]);
+            result[i] = new($"@{parameterName}{i}", items[i]);
         }
 
         return result;
