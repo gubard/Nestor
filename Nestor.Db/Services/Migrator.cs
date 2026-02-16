@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Frozen;
+﻿using System.Collections.Frozen;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -17,11 +17,6 @@ public interface IMigrator
 
 public sealed class Migrator : IMigrator
 {
-    private static readonly SqlQuery TestQuery = "SELECT * FROM Migrations;";
-    private static readonly SqlQuery MigrationsCountQuery = "SELECT COUNT(*) FROM Migrations;";
-
-    private readonly FrozenDictionary<int, string> _migrations;
-
     public Migrator(FrozenDictionary<int, string> migrations)
     {
         _migrations = migrations;
@@ -32,27 +27,17 @@ public sealed class Migrator : IMigrator
         if (factory.IsCanConnect(TestQuery))
         {
             using var session = factory.CreateSession();
-            var migrationCount = session.ExecuteScalarInt32(MigrationsCountQuery);
+            var ids = GetUnappliedMigrations(session);
 
-            if (migrationCount == _migrations.Count)
+            foreach (var id in ids)
             {
-                return;
-            }
-
-            var migrations = _migrations
-                .OrderBy(x => x.Key)
-                .ToArray()
-                .AsSpan()
-                .Slice(migrationCount);
-
-            foreach (var migration in migrations)
-            {
-                session.ExecuteNonQuery(migration.Value);
+                var sql = _migrations[id];
+                session.ExecuteNonQuery(sql);
 
                 session.ExecuteNonQuery(
                     new MigrationEntity[]
                     {
-                        new() { Id = migration.Key, Sql = migration.Value },
+                        new() { Id = id, Sql = sql },
                     }.CreateInsertQuery()
                 );
             }
@@ -88,33 +73,68 @@ public sealed class Migrator : IMigrator
         return MigrateCore(factory, ct).ConfigureAwait(false);
     }
 
+    private static readonly SqlQuery MigrationIdsQuery = "SELECT Id FROM Migrations";
+    private static readonly SqlQuery TestQuery = "SELECT * FROM Migrations;";
+
+    private readonly FrozenDictionary<int, string> _migrations;
+
+    private async ValueTask<int[]> GetUnappliedMigrationsAsync(
+        DbSession session,
+        CancellationToken ct
+    )
+    {
+        await using var reader = await session.ExecuteReaderAsync(MigrationIdsQuery, ct);
+
+        if (!reader.HasRows)
+        {
+            return _migrations.Select(x => x.Key).Order().ToArray();
+        }
+
+        var ids = new List<int>();
+
+        while (await reader.ReadAsync(ct))
+        {
+            ids.Add(reader.GetFieldValue<int>(0));
+        }
+
+        return _migrations.Select(x => x.Key).Except(ids).Order().ToArray();
+    }
+
+    private int[] GetUnappliedMigrations(DbSession session)
+    {
+        using var reader = session.ExecuteReader(MigrationIdsQuery);
+
+        if (!reader.HasRows)
+        {
+            return _migrations.Select(x => x.Key).Order().ToArray();
+        }
+
+        var ids = new List<int>();
+
+        while (reader.Read())
+        {
+            ids.Add(reader.GetFieldValue<int>(0));
+        }
+
+        return _migrations.Select(x => x.Key).Except(ids).Order().ToArray();
+    }
+
     private async ValueTask MigrateCore(IDbConnectionFactory factory, CancellationToken ct)
     {
         if (await factory.IsCanConnectAsync(TestQuery, ct))
         {
             await using var session = factory.CreateSession();
-            var migrationCount = await session.ExecuteScalarInt32Async(MigrationsCountQuery, ct);
+            var ids = await GetUnappliedMigrationsAsync(session, ct);
 
-            if (migrationCount == _migrations.Count)
+            foreach (var id in ids)
             {
-                return;
-            }
-
-            var migrations = _migrations
-                .OrderBy(x => x.Key)
-                .ToArray()
-                .AsSpan()
-                .Slice(migrationCount)
-                .ToArray();
-
-            foreach (var migration in migrations)
-            {
-                await session.ExecuteNonQueryAsync(migration.Value, ct);
+                var sql = _migrations[id];
+                await session.ExecuteNonQueryAsync(sql, ct);
 
                 await session.ExecuteNonQueryAsync(
                     new MigrationEntity[]
                     {
-                        new() { Id = migration.Key, Sql = migration.Value },
+                        new() { Id = id, Sql = sql },
                     }.CreateInsertQuery(),
                     ct
                 );
