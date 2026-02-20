@@ -1,11 +1,14 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Threading;
 using Gaia.Services;
-using Nestor.Db.Models;
 
 namespace Nestor.Db.Services;
 
 public interface IDbCache<in TPostRequest, in TGetResponse> : ICache<TPostRequest, TGetResponse>;
+
+public abstract class EmptyDbCache<TPostRequest, TGetResponse>
+    : EmptyCache<TPostRequest, TGetResponse>,
+        IDbCache<TPostRequest, TGetResponse>;
 
 public abstract class DbCache<TPostRequest, TGetResponse> : IDbCache<TPostRequest, TGetResponse>
 {

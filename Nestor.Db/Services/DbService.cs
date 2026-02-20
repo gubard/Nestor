@@ -19,6 +19,40 @@ public interface IDbService<in TGetRequest, in TPostRequest, TGetResponse, TPost
     ConfiguredValueTaskAwaitable ClearEventsAsync(CancellationToken ct);
 }
 
+public abstract class EmptyDbService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
+    : IDbService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
+    where TGetResponse : IValidationErrors, new()
+    where TPostResponse : IValidationErrors, IPostResponse, new()
+    where TPostRequest : IPostRequest
+{
+    public ConfiguredValueTaskAwaitable<TGetResponse> GetAsync(
+        TGetRequest request,
+        CancellationToken ct
+    )
+    {
+        return TaskHelper.FromResult(new TGetResponse());
+    }
+
+    public ConfiguredValueTaskAwaitable<TPostResponse> PostAsync(
+        Guid idempotentId,
+        TPostRequest request,
+        CancellationToken ct
+    )
+    {
+        return TaskHelper.FromResult(new TPostResponse());
+    }
+
+    public ConfiguredValueTaskAwaitable<EventEntity[]> GetEventsAsync(CancellationToken ct)
+    {
+        return TaskHelper.FromResult(Array.Empty<EventEntity>());
+    }
+
+    public ConfiguredValueTaskAwaitable ClearEventsAsync(CancellationToken ct)
+    {
+        return TaskHelper.ConfiguredCompletedTask;
+    }
+}
+
 public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
     : IDbService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
     where TGetResponse : IValidationErrors, new()

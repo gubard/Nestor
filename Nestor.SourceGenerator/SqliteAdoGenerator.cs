@@ -9,9 +9,7 @@ public sealed class SqliteAdoGenerator : IIncrementalGenerator
     {
         var assemblyAttributes = context.CompilationProvider.Select(
             (compilation, _) =>
-                compilation
-                    .Assembly.GetAttributes()
-                    .Where(x => x.AttributeClass?.Name == "SqliteAdo")
+                compilation.Assembly.GetAttributes().Where(x => x.AttributeClass?.Name == "Ado")
         );
 
         context.RegisterSourceOutput(

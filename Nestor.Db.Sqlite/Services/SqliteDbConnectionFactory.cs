@@ -1,11 +1,8 @@
 ﻿using System.Data.Common;
-using System.IO;
-using Gaia.Services;
 using Microsoft.Data.Sqlite;
+using Nestor.Db.Services;
 
-namespace Nestor.Db.Models;
-
-public interface IDbConnectionFactory : IFactory<DbConnection>;
+namespace Nestor.Db.Sqlite.Services;
 
 public sealed class SqliteDbConnectionFactory : IDbConnectionFactory
 {
