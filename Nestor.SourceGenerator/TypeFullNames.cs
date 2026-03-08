@@ -30,6 +30,7 @@ public static class TypeFullNames
     public const string UpdateProperty = "Nestor.Db.Models.UpdateProperty";
     public const string Span = "System.Span";
     public const string ReadOnlySpan = "System.ReadOnlySpan";
+    public const string ReadOnlyMemory = "System.ReadOnlyMemory";
     public const string DBNull = "System.DBNull";
     public const string DbDataReader = "System.Data.Common.DbDataReader";
     public const string DbSession = "Nestor.Db.Services.DbSession";

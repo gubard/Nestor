@@ -66,6 +66,8 @@ public sealed class SqliteAdoGenerator : IIncrementalGenerator
                     stringBuilder.AppendLine();
                     stringBuilder.AppendLine($"public static class {type.GetTableName()}Ext");
                     stringBuilder.AppendLine("{");
+                    AddPropertyNamesField(stringBuilder, properties);
+                    stringBuilder.AppendLine();
                     AddGetPropertyValueMethod(stringBuilder, type, properties);
                     stringBuilder.AppendLine();
                     AddGetParametersMethods(stringBuilder, type, properties);
@@ -80,7 +82,7 @@ public sealed class SqliteAdoGenerator : IIncrementalGenerator
                     );
 
                     stringBuilder.AppendLine();
-                    AddUpdateMethod(stringBuilder, type, id);
+                    AddCreateUpdateMethod(stringBuilder, type, id);
                     stringBuilder.AppendLine();
                     AddSelectMethod(stringBuilder, type, id);
                     stringBuilder.AppendLine();
@@ -92,7 +94,7 @@ public sealed class SqliteAdoGenerator : IIncrementalGenerator
                     stringBuilder.AppendLine();
                     AddToByteArrayMethod(stringBuilder);
                     stringBuilder.AppendLine();
-                    AddUpdateAllMethod(stringBuilder, type, id, properties);
+                    AddCreateUpdateMethod(stringBuilder, type, id, properties);
                     stringBuilder.AppendLine();
                     AddExistsMethod(stringBuilder, type, id);
                     stringBuilder.AppendLine("}");
@@ -145,13 +147,23 @@ public sealed class SqliteAdoGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("{");
 
         stringBuilder.AppendLine(
-            $"parameters[i] = new global::{TypeFullNames.QueryParameter}($\"@{{{{propertyNames[i]}}}}{{{{postfix}}}}\", value.GetPropertyValue(propertyNames[i]));"
+            $"parameters[i] = new global::{TypeFullNames.QueryParameter}($\"@{{propertyNames[i]}}{{postfix}}\", value.GetPropertyValue(propertyNames[i]));"
         );
 
         stringBuilder.AppendLine("}");
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("return parameters;");
         stringBuilder.AppendLine("}");
+    }
+
+    private void AddPropertyNamesField(
+        CSharpStringBuilder stringBuilder,
+        IPropertySymbol[] properties
+    )
+    {
+        stringBuilder.AppendLine(
+            $"public static readonly global::{TypeFullNames.ReadOnlyMemory}<string> PropertyNames = new string[] {{\"{string.Join("\", \"", properties.Select(x => x.Name))}\"}};"
+        );
     }
 
     private void AddGetPropertyValueMethod(
@@ -245,7 +257,7 @@ public sealed class SqliteAdoGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("}");
     }
 
-    private void AddUpdateMethod(
+    private void AddCreateUpdateMethod(
         CSharpStringBuilder stringBuilder,
         INamedTypeSymbol type,
         IPropertySymbol id
@@ -290,7 +302,7 @@ public sealed class SqliteAdoGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("}");
     }
 
-    private void AddUpdateAllMethod(
+    private void AddCreateUpdateMethod(
         CSharpStringBuilder stringBuilder,
         INamedTypeSymbol type,
         IPropertySymbol id,
@@ -301,14 +313,31 @@ public sealed class SqliteAdoGenerator : IIncrementalGenerator
             $"public static global::{TypeFullNames.SqlQuery} CreateUpdate{type.GetTableName()}Query("
         );
 
-        stringBuilder.AppendLine($"this global::{type.GetRealFullName()} item)");
+        stringBuilder.AppendLine($"this global::{type.GetRealFullName()} item,");
+
+        stringBuilder.AppendLine(
+            $"params global::{TypeFullNames.ReadOnlySpan}<string> propertyNames)"
+        );
+
         stringBuilder.AppendLine("{");
-        stringBuilder.AppendLine("var parameters = item.GetDbParameters(string.Empty);");
+
+        stringBuilder.AppendLine(
+            "var parameters = item.GetDbParameters(string.Empty, propertyNames);"
+        );
 
         stringBuilder.AppendLine(
             $"var sql = $\"UPDATE {type.GetTableName()} SET {string.Join(", ", properties.Where(x => x.Name != id.Name).Select(x => $"{x.Name} = @{x.Name}"))} WHERE {id.Name} = @{id.Name}\";"
         );
 
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine("if(!propertyNames.IsEmpty)");
+        stringBuilder.AppendLine("{");
+
+        stringBuilder.AppendLine(
+            $"sql = $\"UPDATE {type.GetTableName()} SET {{string.Join(\", \", propertyNames.ToArray().Where(x => x != \"{id.Name}\").Select(x => $\"{{x}} = @{{x}}\"))}} WHERE {id.Name} = @{id.Name}\";"
+        );
+
+        stringBuilder.AppendLine("}");
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("return new(sql, parameters);");
         stringBuilder.AppendLine("}");
