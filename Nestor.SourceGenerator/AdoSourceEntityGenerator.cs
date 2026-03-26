@@ -3,7 +3,7 @@
 namespace Nestor.SourceGenerator;
 
 [Generator]
-public sealed class SourceEntityGenerator : IIncrementalGenerator
+public sealed class AdoSourceEntityGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -11,7 +11,7 @@ public sealed class SourceEntityGenerator : IIncrementalGenerator
             (compilation, _) =>
                 compilation
                     .Assembly.GetAttributes()
-                    .Where(x => x.AttributeClass?.Name == "SourceEntity")
+                    .Where(x => x.AttributeClass?.Name == "AdoSourceEntity")
         );
 
         context.RegisterSourceOutput(
@@ -89,8 +89,6 @@ public sealed class SourceEntityGenerator : IIncrementalGenerator
                         stringBuilder.AppendLine();
                         CreateExistsMethod(stringBuilder, type, id);
                         stringBuilder.AppendLine("}");
-                        stringBuilder.AppendLine();
-                        CreateEditClass(stringBuilder, type, properties, id);
                         var text = stringBuilder.ToString();
                         spc.AddSource($"EventEntity.{type}.g.cs", text);
                     }
@@ -494,7 +492,7 @@ public sealed class SourceEntityGenerator : IIncrementalGenerator
             );
 
             stringBuilder.AppendLine(
-                $"{GetEntityValueName(property)} = {GetEntityTypeFullName(property)}edit.{property.Name},"
+                $"{property.GetEntityValueName()} = {property.GetEntityTypeFullName()}edit.{property.Name},"
             );
 
             stringBuilder.AppendLine("UserId = userId,");
@@ -611,7 +609,7 @@ public sealed class SourceEntityGenerator : IIncrementalGenerator
             );
 
             stringBuilder.AppendLine(
-                $"{GetEntityValueName(property)} = {GetEntityTypeFullName(property)}edit.{property.Name},"
+                $"{property.GetEntityValueName()} = {property.GetEntityTypeFullName()}edit.{property.Name},"
             );
 
             stringBuilder.AppendLine("UserId = userId,");
@@ -684,7 +682,7 @@ public sealed class SourceEntityGenerator : IIncrementalGenerator
             );
 
             stringBuilder.AppendLine(
-                $"{GetEntityValueName(property)} = {GetEntityTypeFullName(property)}item.{property.Name},"
+                $"{property.GetEntityValueName()} = {property.GetEntityTypeFullName()}item.{property.Name},"
             );
 
             stringBuilder.AppendLine("UserId = userId,");
@@ -770,7 +768,7 @@ public sealed class SourceEntityGenerator : IIncrementalGenerator
             );
 
             stringBuilder.AppendLine(
-                $"{GetEntityValueName(property)} = {GetEntityTypeFullName(property)}item.{property.Name},"
+                $"{property.GetEntityValueName()} = {property.GetEntityTypeFullName()}item.{property.Name},"
             );
 
             stringBuilder.AppendLine("UserId = userId,");
@@ -796,116 +794,5 @@ public sealed class SourceEntityGenerator : IIncrementalGenerator
         );
 
         stringBuilder.AppendLine("}");
-    }
-
-    private void CreateEditClass(
-        CSharpStringBuilder stringBuilder,
-        INamedTypeSymbol type,
-        IPropertySymbol[] properties,
-        IPropertySymbol id
-    )
-    {
-        stringBuilder.AppendLine($"public sealed partial class Edit{type.Name}");
-        stringBuilder.AppendLine("{");
-        stringBuilder.AppendLine($"public Edit{type.Name}(global::{TypeFullNames.Guid} id)");
-        stringBuilder.AppendLine("{");
-        stringBuilder.AppendLine($"{id.Name} = id;");
-        stringBuilder.AppendLine("}");
-        stringBuilder.AppendLine();
-        stringBuilder.AppendLine($"public global::{TypeFullNames.Guid} {id.Name} {{ get; }}");
-
-        foreach (var property in properties)
-        {
-            if (id.Name == property.Name)
-            {
-                continue;
-            }
-
-            stringBuilder.AppendLine($"public bool IsEdit{property.Name} {{ get; set; }}");
-            var realFullName = property.Type.GetRealFullName();
-
-            if (realFullName == TypeFullNames.String)
-            {
-                stringBuilder.AppendLine(
-                    $"public string {property.Name} {{ get; set; }} = string.Empty;"
-                );
-            }
-            else if (realFullName.EndsWith("[]"))
-            {
-                stringBuilder.AppendLine(
-                    $"public global::{realFullName} {property.Name} {{ get; set; }} = [];"
-                );
-            }
-            else
-            {
-                stringBuilder.AppendLine(
-                    $"public global::{realFullName} {property.Name} {{ get; set; }}"
-                );
-            }
-        }
-
-        stringBuilder.AppendLine();
-        stringBuilder.AppendLine("public int GetEdited()");
-        stringBuilder.AppendLine("{");
-        stringBuilder.AppendLine("var count = 0;");
-        stringBuilder.AppendLine();
-
-        foreach (var property in properties)
-        {
-            if (id.Name == property.Name)
-            {
-                continue;
-            }
-
-            stringBuilder.AppendLine($"if(IsEdit{property.Name})");
-            stringBuilder.AppendLine("{");
-            stringBuilder.AppendLine("count++;");
-            stringBuilder.AppendLine("}");
-        }
-        stringBuilder.AppendLine();
-        stringBuilder.AppendLine("return count;");
-        stringBuilder.AppendLine("}");
-        stringBuilder.AppendLine("}");
-    }
-
-    private string GetEntityValueName(IPropertySymbol property)
-    {
-        return GetEntityValueName(property.Type);
-    }
-
-    private string GetEntityValueName(ITypeSymbol type)
-    {
-        if (type is INamedTypeSymbol { Name: "Nullable" } named)
-        {
-            return GetEntityValueName(named.TypeArguments[0]);
-        }
-
-        if (type is IArrayTypeSymbol array)
-        {
-            return $"Entity{array.ElementType.GetRealName()}ArrayValue";
-        }
-
-        if (type is INamedTypeSymbol { TypeKind: TypeKind.Enum, EnumUnderlyingType: not null } e)
-        {
-            return $"Entity{e.EnumUnderlyingType.GetRealName()}Value";
-        }
-
-        return $"Entity{type.GetRealName()}Value";
-    }
-
-    private string GetEntityTypeFullName(IPropertySymbol property)
-    {
-        if (
-            property.Type is INamedTypeSymbol
-            {
-                TypeKind: TypeKind.Enum,
-                EnumUnderlyingType: not null
-            } named
-        )
-        {
-            return $"(global::{named.EnumUnderlyingType.GetRealFullName()})";
-        }
-
-        return string.Empty;
     }
 }

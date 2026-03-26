@@ -2,6 +2,8 @@
   <Folder Name="/Gaia/">
     <Project Path="../Gaia/Gaia/Gaia.csproj" />
   </Folder>
+  <Project Path="../UltraLiteDB/UltraLiteDB/UltraLiteDB.csproj" />
+  <Project Path="Nestor.Db.LiteDb/Nestor.Db.LiteDb.csproj" />
   <Project Path="Nestor.Db.Sqlite/Nestor.Db.Sqlite.csproj" />
   <Project Path="Nestor.Db/Nestor.Db.csproj" />
   <Project Path="Nestor.SourceGenerator/Nestor.SourceGenerator.csproj" />

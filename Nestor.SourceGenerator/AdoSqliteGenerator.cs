@@ -3,7 +3,7 @@
 namespace Nestor.SourceGenerator;
 
 [Generator]
-public sealed class SqliteAdoGenerator : IIncrementalGenerator
+public sealed class AdoSqliteGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -211,7 +211,7 @@ public sealed class SqliteAdoGenerator : IIncrementalGenerator
             $"public static global::{TypeFullNames.SqlQuery} CreateInsertQuery("
         );
 
-        stringBuilder.AppendLine($"this global::{type}[] values)");
+        stringBuilder.AppendLine($"this global::{type.GetRealFullName()}[] values)");
         stringBuilder.AppendLine("{");
         stringBuilder.AppendLine("return CreateInsertQuery(values.AsSpan());");
         stringBuilder.AppendLine("}");

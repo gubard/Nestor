@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
@@ -10,6 +11,7 @@
       ReferenceOutputAssembly="false"
       OutputItemType="Analyzer"
     />
-    <ProjectReference Include="..\..\Gaia\Gaia\Gaia.csproj" />
+    <ProjectReference Include="..\..\UltraLiteDB\UltraLiteDB\UltraLiteDB.csproj" />
+    <ProjectReference Include="..\Nestor.Db\Nestor.Db.csproj" />
   </ItemGroup>
 </Project>

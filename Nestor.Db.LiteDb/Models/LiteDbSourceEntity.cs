@@ -1,11 +1,9 @@
-using System;
-
-namespace Nestor.Db.Models;
+namespace Nestor.Db.LiteDb.Models;
 
 [AttributeUsage(AttributeTargets.Assembly)]
-public sealed class SourceEntity : Attribute
+public sealed class LiteDbSourceEntity : Attribute
 {
-    public SourceEntity(Type type, string idName)
+    public LiteDbSourceEntity(Type type, string idName)
     {
         Type = type;
         IdName = idName;

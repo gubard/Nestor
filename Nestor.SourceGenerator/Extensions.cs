@@ -5,6 +5,47 @@ namespace Nestor.SourceGenerator;
 
 public static class Extensions
 {
+    public static string GetEntityTypeFullName(this IPropertySymbol property)
+    {
+        if (
+            property.Type is INamedTypeSymbol
+            {
+                TypeKind: TypeKind.Enum,
+                EnumUnderlyingType: not null
+            } named
+        )
+        {
+            return $"(global::{named.EnumUnderlyingType.GetRealFullName()})";
+        }
+
+        return string.Empty;
+    }
+
+    public static string GetEntityValueName(this IPropertySymbol property)
+    {
+        return GetEntityValueName(property.Type);
+    }
+
+    private static string GetEntityValueName(this ITypeSymbol type)
+    {
+        if (type is INamedTypeSymbol { Name: "Nullable" } named)
+        {
+            return GetEntityValueName(named.TypeArguments[0]);
+        }
+
+        if (type is IArrayTypeSymbol array)
+        {
+            return $"Entity{array.ElementType.GetRealName()}ArrayValue";
+        }
+
+        if (type is INamedTypeSymbol { TypeKind: TypeKind.Enum, EnumUnderlyingType: not null } e)
+        {
+            return $"Entity{e.EnumUnderlyingType.GetRealName()}Value";
+        }
+
+        return $"Entity{type.GetRealName()}Value";
+    }
+
     public static TypeSyntax GetAttributeValueType<T>(
         this T syntax,
         string attributeName,

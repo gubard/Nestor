@@ -53,7 +53,7 @@ public abstract class EmptyDbService<TGetRequest, TPostRequest, TGetResponse, TP
     }
 }
 
-public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
+public abstract class AdoDbService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
     : IDbService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
     where TGetResponse : IValidationErrors, new()
     where TPostResponse : IValidationErrors, IPostResponse, new()
@@ -92,7 +92,7 @@ public abstract class DbService<TGetRequest, TPostRequest, TGetResponse, TPostRe
         CancellationToken ct
     );
 
-    protected DbService(IDbConnectionFactory factory, params string[] eventEntityTypes)
+    protected AdoDbService(IDbConnectionFactory factory, params string[] eventEntityTypes)
     {
         Factory = factory;
         _eventEntityTypes = eventEntityTypes.ToArray();
