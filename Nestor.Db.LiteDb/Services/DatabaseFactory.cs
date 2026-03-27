@@ -1,8 +1,12 @@
-using Gaia.Services;
+using System.Runtime.CompilerServices;
+using Gaia.Helpers;
 
 namespace Nestor.Db.LiteDb.Services;
 
-public interface IDatabaseFactory : IFactory<IDatabase>;
+public interface IDatabaseFactory
+{
+    ConfiguredValueTaskAwaitable<IDatabase> CreateAsync(CancellationToken ct);
+}
 
 public sealed class DatabaseFactory : IDatabaseFactory
 {
@@ -11,9 +15,9 @@ public sealed class DatabaseFactory : IDatabaseFactory
         _factory = factory;
     }
 
-    public IDatabase Create()
+    public ConfiguredValueTaskAwaitable<IDatabase> CreateAsync(CancellationToken ct)
     {
-        return new Database(_factory.Create());
+        return TaskHelper.FromResult((IDatabase)new Database(_factory.Create()));
     }
 
     private readonly IUltraLiteDatabaseFactory _factory;

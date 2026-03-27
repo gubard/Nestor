@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using Gaia.Helpers;
 using Gaia.Services;
 using Nestor.Db.LiteDb.Helpers;
 using Nestor.Db.Models;
@@ -30,26 +29,12 @@ public abstract class LiteDbService<TGetRequest, TPostRequest, TGetResponse, TPo
 
     public ConfiguredValueTaskAwaitable<EventEntity[]> GetEventsAsync(CancellationToken ct)
     {
-        using var session = Factory.Create();
-        var collection = session.GetEventEntityCollection();
-        var documents = collection.Find(Query.In("EntityType", _eventEntityTypes));
-
-        if (documents is null)
-        {
-            return TaskHelper.FromResult(Array.Empty<EventEntity>());
-        }
-
-        var events = documents.Select(x => x.ToEventEntity()).ToArray();
-
-        return TaskHelper.FromResult(events);
+        return GetEventsCore(ct).ConfigureAwait(false);
     }
 
     public ConfiguredValueTaskAwaitable ClearEventsAsync(CancellationToken ct)
     {
-        using var database = Factory.Create();
-        database.DropEventEntityCollection();
-
-        return TaskHelper.ConfiguredCompletedTask;
+        return ClearEventsCore(ct).ConfigureAwait(false);
     }
 
     protected readonly IDatabaseFactory Factory;
@@ -69,6 +54,29 @@ public abstract class LiteDbService<TGetRequest, TPostRequest, TGetResponse, TPo
 
     private readonly BsonValue[] _eventEntityTypes;
 
+    public async ValueTask ClearEventsCore(CancellationToken ct)
+    {
+        using var database = await Factory.CreateAsync(ct);
+        database.DropEventEntityCollection();
+        await database.SaveChangesAsync(ct);
+    }
+
+    private async ValueTask<EventEntity[]> GetEventsCore(CancellationToken ct)
+    {
+        using var session = await Factory.CreateAsync(ct);
+        var collection = session.GetEventEntityCollection();
+        var documents = collection.Find(Query.In("EntityType", _eventEntityTypes));
+
+        if (documents is null)
+        {
+            return [];
+        }
+
+        var events = documents.Select(x => x.ToEventEntity()).ToArray();
+
+        return events;
+    }
+
     private async ValueTask<TPostResponse> PostCore(
         Guid idempotentId,
         TPostRequest request,
@@ -84,7 +92,7 @@ public abstract class LiteDbService<TGetRequest, TPostRequest, TGetResponse, TPo
             return response;
         }
 
-        using var database = Factory.Create();
+        using var database = await Factory.CreateAsync(ct);
 
         foreach (var e in request.Events)
         {
@@ -112,7 +120,7 @@ public abstract class LiteDbService<TGetRequest, TPostRequest, TGetResponse, TPo
             eventCollection.Insert(@event);
         }
 
-        database.SaveChanges();
+        await database.SaveChangesAsync(ct);
         response.IsEventSaved = true;
         await ExecuteAsync(idempotentId, response, request, ct);
 

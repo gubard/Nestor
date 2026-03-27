@@ -14,7 +14,7 @@ public sealed class FileUltraLiteDatabaseFactory : IUltraLiteDatabaseFactory
 
     public UltraLiteDatabase Create()
     {
-        return new(_file.FullName);
+        return new(new ConnectionString(_file.FullName) { Async = true });
     }
 
     private readonly FileInfo _file;

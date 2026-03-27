@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+using Gaia.Helpers;
 using UltraLiteDB;
 
 namespace Nestor.Db.LiteDb.Services;
@@ -6,7 +8,7 @@ public interface IDatabase : IDisposable
 {
     bool DropCollection(string name);
     UltraLiteCollection<BsonDocument> GetCollection(string name, BsonAutoId autoId);
-    void SaveChanges();
+    ConfiguredValueTaskAwaitable SaveChangesAsync(CancellationToken ct);
 }
 
 public sealed class Database : IDatabase
@@ -33,5 +35,8 @@ public sealed class Database : IDatabase
         return _database.GetCollection(name, autoId);
     }
 
-    public void SaveChanges() { }
+    public ConfiguredValueTaskAwaitable SaveChangesAsync(CancellationToken ct)
+    {
+        return TaskHelper.ConfiguredCompletedTask;
+    }
 }

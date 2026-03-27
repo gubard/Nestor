@@ -31,7 +31,7 @@ public sealed class LiteDbObjectStorage : IObjectStorage
     private async ValueTask<T> LoadCore<T>(string key, CancellationToken ct)
         where T : new()
     {
-        using var database = _factory.Create();
+        using var database = await _factory.CreateAsync(ct);
         var collection = database.GetObjectEntityCollection();
         var document = collection.FindById(key);
 
@@ -49,7 +49,7 @@ public sealed class LiteDbObjectStorage : IObjectStorage
 
     private async ValueTask SaveCore(string key, object obj, CancellationToken ct)
     {
-        using var database = _factory.Create();
+        using var database = await _factory.CreateAsync(ct);
         var collection = database.GetObjectEntityCollection();
         var document = collection.FindById(key);
         await using var stream = new MemoryStream();
@@ -63,17 +63,18 @@ public sealed class LiteDbObjectStorage : IObjectStorage
             ContentType = _serializer.FileExtension,
         };
 
-        UpdateDocument(database, collection, entity, document);
+        await UpdateDocument(database, collection, entity, document, ct);
     }
 
-    private void UpdateDocument(
+    private async ValueTask UpdateDocument(
         IDatabase database,
         UltraLiteCollection<BsonDocument> collection,
         ObjectEntity entity,
-        BsonDocument? document
+        BsonDocument? document,
+        CancellationToken ct
     )
     {
-        using var fin = new Finally(database.SaveChanges);
+        await using var fin = new FinallyAsync(async () => await database.SaveChangesAsync(ct));
 
         if (document is null)
         {
