@@ -139,7 +139,7 @@ public static class BsonValueExtension
 
     public static DateTimeOffset ToDateTimeOffset(this BsonValue value)
     {
-        return new DateTimeOffset(value.AsInt64, TimeSpan.Zero);
+        return new(value.AsInt64, TimeSpan.Zero);
     }
 
     public static DateTimeOffset? ToDateTimeOffsetOrNull(this BsonValue value)
@@ -194,12 +194,12 @@ public static class BsonValueExtension
 
     public static BsonValue ToBsonValue(this ushort value)
     {
-        return BitConverter.GetBytes(value);
+        return (int)value;
     }
 
     public static ushort ToUInt16(this BsonValue value)
     {
-        return BitConverter.ToUInt16(value.AsBinary.ToArray());
+        return (ushort)value.AsInt32;
     }
 
     public static ushort? ToUInt16OrNull(this BsonValue value)
@@ -224,12 +224,12 @@ public static class BsonValueExtension
 
     public static BsonValue ToBsonValue(this uint value)
     {
-        return BitConverter.GetBytes(value);
+        return BitConverter.ToInt32(BitConverter.GetBytes(value));
     }
 
     public static uint ToUInt32(this BsonValue value)
     {
-        return BitConverter.ToUInt32(value.AsBinary.ToArray());
+        return BitConverter.ToUInt32(BitConverter.GetBytes(value.AsInt32));
     }
 
     public static uint? ToUInt32OrNull(this BsonValue value)
@@ -419,12 +419,12 @@ public static class BsonValueExtension
 
     public static BsonValue ToBsonValue(this ulong value)
     {
-        return BitConverter.GetBytes(value);
+        return BitConverter.ToInt64(BitConverter.GetBytes(value));
     }
 
     public static ulong ToUInt64(this BsonValue value)
     {
-        return BitConverter.ToUInt64(value.AsBinary.ToArray());
+        return BitConverter.ToUInt64(BitConverter.GetBytes(value.AsInt64));
     }
 
     public static ulong? ToUInt64OrNull(this BsonValue value)
