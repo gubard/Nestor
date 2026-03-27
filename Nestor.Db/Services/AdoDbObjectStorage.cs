@@ -10,9 +10,9 @@ using Nestor.Db.Models;
 
 namespace Nestor.Db.Services;
 
-public sealed class DbObjectStorage : IObjectStorage
+public sealed class AdoDbObjectStorage : IObjectStorage
 {
-    public DbObjectStorage(IDbConnectionFactory factory, ISerializer serializer)
+    public AdoDbObjectStorage(IDbConnectionFactory factory, ISerializer serializer)
     {
         _factory = factory;
         _serializer = serializer;

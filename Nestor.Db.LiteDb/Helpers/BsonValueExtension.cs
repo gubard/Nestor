@@ -57,7 +57,7 @@ public static class BsonValueExtension
 
         if (underlyingType == typeof(ulong))
         {
-            return (TEnum)Enum.ToObject(typeof(TEnum), (ulong)value);
+            return (TEnum)Enum.ToObject(typeof(TEnum), value.ToUInt64());
         }
 
         throw new NotSupportedException();
@@ -116,7 +116,7 @@ public static class BsonValueExtension
 
         if (underlyingType == typeof(ulong))
         {
-            return Convert.ToUInt64(value);
+            return Convert.ToUInt64(value).ToBsonValue();
         }
 
         throw new NotSupportedException();
@@ -194,12 +194,12 @@ public static class BsonValueExtension
 
     public static BsonValue ToBsonValue(this ushort value)
     {
-        return BsonValue.FromObject(value);
+        return BitConverter.GetBytes(value);
     }
 
     public static ushort ToUInt16(this BsonValue value)
     {
-        return value.AsType<ushort>();
+        return BitConverter.ToUInt16(value.AsBinary.ToArray());
     }
 
     public static ushort? ToUInt16OrNull(this BsonValue value)
@@ -224,12 +224,12 @@ public static class BsonValueExtension
 
     public static BsonValue ToBsonValue(this uint value)
     {
-        return BsonValue.FromObject(value);
+        return BitConverter.GetBytes(value);
     }
 
     public static uint ToUInt32(this BsonValue value)
     {
-        return value.AsType<uint>();
+        return BitConverter.ToUInt32(value.AsBinary.ToArray());
     }
 
     public static uint? ToUInt32OrNull(this BsonValue value)
@@ -364,7 +364,7 @@ public static class BsonValueExtension
 
     public static byte[] ToByteArray(this BsonValue value)
     {
-        return value.AsType<byte[]>();
+        return value.AsBinary.ToArray();
     }
 
     public static byte[]? ToByteArrayOrNull(this BsonValue value)
@@ -405,5 +405,35 @@ public static class BsonValueExtension
         }
 
         return value.ToInt16();
+    }
+
+    public static BsonValue ToBsonValue(this ulong? value)
+    {
+        if (value.HasValue)
+        {
+            return value.Value.ToBsonValue();
+        }
+
+        return BsonValue.Null;
+    }
+
+    public static BsonValue ToBsonValue(this ulong value)
+    {
+        return BitConverter.GetBytes(value);
+    }
+
+    public static ulong ToUInt64(this BsonValue value)
+    {
+        return BitConverter.ToUInt64(value.AsBinary.ToArray());
+    }
+
+    public static ulong? ToUInt64OrNull(this BsonValue value)
+    {
+        if (value.IsNull)
+        {
+            return null;
+        }
+
+        return value.ToUInt64();
     }
 }

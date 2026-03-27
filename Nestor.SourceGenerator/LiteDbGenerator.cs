@@ -225,6 +225,28 @@ public sealed class LiteDbGenerator : IIncrementalGenerator
         return GetToBsonValue(property.Type);
     }
 
+    private string GetToValue(IPropertySymbol property)
+    {
+        var value = GetToValue(property.Type);
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            if (property.Type.NullableAnnotation == NullableAnnotation.Annotated)
+            {
+                if (property.Type.IsValueType)
+                {
+                    return $"document.Get{((INamedTypeSymbol)property.Type).TypeArguments[0].GetRealName()}(\"{property.Name}\")";
+                }
+                else
+                {
+                    return $"document.Get{property.Type.GetRealName()}(\"{property.Name}\")";
+                }
+            }
+        }
+
+        return $"document[\"{property.Name}\"]{value}";
+    }
+
     private string GetToValue(ITypeSymbol symbol)
     {
         var name = GetToValueName(symbol);
@@ -260,6 +282,7 @@ public sealed class LiteDbGenerator : IIncrementalGenerator
             or "UInt16"
             or "Int16"
             or "UInt32"
+            or "UInt64"
             or "Char"
             or "SByte"
             or "DateOnly"
@@ -285,6 +308,7 @@ public sealed class LiteDbGenerator : IIncrementalGenerator
             or "DateTimeOffset"
             or "UInt16"
             or "UInt32"
+            or "UInt64"
             or "Char"
             or "DateOnly"
             or "TimeOnly"
@@ -318,9 +342,7 @@ public sealed class LiteDbGenerator : IIncrementalGenerator
                 continue;
             }
 
-            stringBuilder.AppendLine(
-                $"{property.Name} = document[\"{property.Name}\"]{GetToValue(property.Type)},"
-            );
+            stringBuilder.AppendLine($"{property.Name} = {GetToValue(property)},");
         }
 
         stringBuilder.AppendLine("};");
