@@ -94,7 +94,7 @@ public sealed class LiteDbSourceEntityGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine("public static void EditEntities(");
-        stringBuilder.AppendLine($"this global::{TypeFullNames.IDatabase} database,");
+        stringBuilder.AppendLine($"this global::{TypeFullNames.UltraLiteDatabase} database,");
         stringBuilder.AppendLine("string userId,");
         stringBuilder.AppendLine($"global::{TypeFullNames.Guid} transactionId,");
         stringBuilder.AppendLine("bool isUseEvents,");
@@ -170,7 +170,7 @@ public sealed class LiteDbSourceEntityGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"public static void DeleteEntities(this {TypeFullNames.IDatabase} database, string userId, global::{TypeFullNames.Guid} transactionId, bool isUseEvents, params global::{id.Type.GetRealFullName()}[] ids)"
+            $"public static void DeleteEntities(this {TypeFullNames.UltraLiteDatabase} database, string userId, global::{TypeFullNames.Guid} transactionId, bool isUseEvents, params global::{id.Type.GetRealFullName()}[] ids)"
         );
 
         stringBuilder.AppendLine("{");
@@ -215,7 +215,7 @@ public sealed class LiteDbSourceEntityGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"public static void AddEntities(this {TypeFullNames.IDatabase} database, string userId, global::{TypeFullNames.Guid} transactionId, bool isUseEvents, global::{type.GetRealFullName()}[] items)"
+            $"public static void AddEntities(this {TypeFullNames.UltraLiteDatabase} database, string userId, global::{TypeFullNames.Guid} transactionId, bool isUseEvents, global::{type.GetRealFullName()}[] items)"
         );
 
         stringBuilder.AppendLine("{");

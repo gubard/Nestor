@@ -136,15 +136,6 @@ public sealed class LiteDbGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("{");
         stringBuilder.AppendLine($"return database.DropCollection(\"{type.Name}\");");
         stringBuilder.AppendLine("}");
-        stringBuilder.AppendLine();
-
-        stringBuilder.AppendLine(
-            $"public static bool Drop{type.Name}Collection(this global::{TypeFullNames.IDatabase} database)"
-        );
-
-        stringBuilder.AppendLine("{");
-        stringBuilder.AppendLine($"return database.DropCollection(\"{type.Name}\");");
-        stringBuilder.AppendLine("}");
     }
 
     private void CreateGetCollection(
@@ -161,18 +152,6 @@ public sealed class LiteDbGenerator : IIncrementalGenerator
 
         stringBuilder.AppendLine(
             $"public static global::{TypeFullNames.UltraLiteCollection}<global::{TypeFullNames.BsonDocument}> Get{type.Name}Collection(this global::{TypeFullNames.UltraLiteDatabase} database)"
-        );
-
-        stringBuilder.AppendLine("{");
-        stringBuilder.AppendLine(
-            $"var collection = database.GetCollection(\"{type.Name}\", global::{TypeFullNames.BsonAutoId}.{bsonAutoId});"
-        );
-        stringBuilder.AppendLine("return collection;");
-        stringBuilder.AppendLine("}");
-        stringBuilder.AppendLine();
-
-        stringBuilder.AppendLine(
-            $"public static global::{TypeFullNames.UltraLiteCollection}<global::{TypeFullNames.BsonDocument}> Get{type.Name}Collection(this global::{TypeFullNames.IDatabase} database)"
         );
 
         stringBuilder.AppendLine("{");

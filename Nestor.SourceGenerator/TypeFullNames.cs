@@ -11,6 +11,7 @@ public static class TypeFullNames
     public const string EnumeratorCancellation =
         "System.Runtime.CompilerServices.EnumeratorCancellation";
 
+    public const string TaskHelper = "Gaia.Helpers.TaskHelper";
     public const string IDatabase = "Nestor.Db.LiteDb.Services.IDatabase";
     public const string Query = "UltraLiteDB.Query";
     public const string QueryParameter = "Nestor.Db.Models.QueryParameter";

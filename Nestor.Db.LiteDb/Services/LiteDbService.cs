@@ -56,25 +56,31 @@ public abstract class LiteDbService<TGetRequest, TPostRequest, TGetResponse, TPo
 
     public async ValueTask ClearEventsCore(CancellationToken ct)
     {
-        using var database = await Factory.CreateAsync(ct);
-        database.DropEventEntityCollection();
-        await database.SaveChangesAsync(ct);
+        var database = await Factory.CreateAsync(ct);
+        await database.ExecuteAsync(db => db.DropEventEntityCollection(), ct);
     }
 
     private async ValueTask<EventEntity[]> GetEventsCore(CancellationToken ct)
     {
-        using var session = await Factory.CreateAsync(ct);
-        var collection = session.GetEventEntityCollection();
-        var documents = collection.Find(Query.In("EntityType", _eventEntityTypes));
+        var database = await Factory.CreateAsync(ct);
 
-        if (documents is null)
-        {
-            return [];
-        }
+        return await database.ExecuteAsync(
+            db =>
+            {
+                var collection = db.GetEventEntityCollection();
+                var documents = collection.Find(Query.In("EntityType", _eventEntityTypes));
 
-        var events = documents.Select(x => x.ToEventEntity()).ToArray();
+                if (documents is null)
+                {
+                    return [];
+                }
 
-        return events;
+                var events = documents.Select(x => x.ToEventEntity()).ToArray();
+
+                return events;
+            },
+            ct
+        );
     }
 
     private async ValueTask<TPostResponse> PostCore(
@@ -92,35 +98,40 @@ public abstract class LiteDbService<TGetRequest, TPostRequest, TGetResponse, TPo
             return response;
         }
 
-        using var database = await Factory.CreateAsync(ct);
+        var database = await Factory.CreateAsync(ct);
 
-        foreach (var e in request.Events)
-        {
-            var eventCollection = database.GetEventEntityCollection();
-            var collection = database.GetCollection(e.GetEntityCollectionName(), BsonAutoId.Guid);
-            var entity = collection.FindById(e.EntityId);
-
-            if (entity is null)
+        await database.ExecuteAsync(
+            db =>
             {
-                var document = DefaultBsonDocument.CreateDefaultBsonDocument(
-                    e.EntityType,
-                    e.EntityId
-                );
+                foreach (var e in request.Events)
+                {
+                    var eventCollection = db.GetEventEntityCollection();
+                    var collection = db.GetCollection(e.GetEntityCollectionName(), BsonAutoId.Guid);
+                    var entity = collection.FindById(e.EntityId);
 
-                collection.Insert(document);
-            }
-            else
-            {
-                entity[e.EntityProperty] = e.GetBsonValue();
-                collection.Update(entity);
-            }
+                    if (entity is null)
+                    {
+                        var document = DefaultBsonDocument.CreateDefaultBsonDocument(
+                            e.EntityType,
+                            e.EntityId
+                        );
 
-            var @event = e.ToBsonDocument();
-            @event.Remove("_id");
-            eventCollection.Insert(@event);
-        }
+                        collection.Insert(document);
+                    }
+                    else
+                    {
+                        entity[e.EntityProperty] = e.GetBsonValue();
+                        collection.Update(entity);
+                    }
 
-        await database.SaveChangesAsync(ct);
+                    var @event = e.ToBsonDocument();
+                    @event.Remove("_id");
+                    eventCollection.Insert(@event);
+                }
+            },
+            ct
+        );
+
         response.IsEventSaved = true;
         await ExecuteAsync(idempotentId, response, request, ct);
 

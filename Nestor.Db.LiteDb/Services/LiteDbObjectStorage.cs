@@ -1,8 +1,6 @@
 using System.Runtime.CompilerServices;
-using Gaia.Models;
 using Gaia.Services;
 using Nestor.Db.Models;
-using UltraLiteDB;
 
 namespace Nestor.Db.LiteDb.Services;
 
@@ -31,16 +29,31 @@ public sealed class LiteDbObjectStorage : IObjectStorage
     private async ValueTask<T> LoadCore<T>(string key, CancellationToken ct)
         where T : new()
     {
-        using var database = await _factory.CreateAsync(ct);
-        var collection = database.GetObjectEntityCollection();
-        var document = collection.FindById(key);
+        var database = await _factory.CreateAsync(ct);
 
-        if (document is null)
+        var obj = await database.ExecuteAsync(
+            db =>
+            {
+                var collection = db.GetObjectEntityCollection();
+                var document = collection.FindById(key);
+
+                if (document is null)
+                {
+                    return new();
+                }
+
+                var obj = document.ToObjectEntity();
+
+                return obj;
+            },
+            ct
+        );
+
+        if (obj.Content.Length == 0)
         {
             return new();
         }
 
-        var obj = document.ToObjectEntity();
         await using var stream = new MemoryStream(obj.Content);
         stream.Position = 0;
 
@@ -49,40 +62,34 @@ public sealed class LiteDbObjectStorage : IObjectStorage
 
     private async ValueTask SaveCore(string key, object obj, CancellationToken ct)
     {
-        using var database = await _factory.CreateAsync(ct);
-        var collection = database.GetObjectEntityCollection();
-        var document = collection.FindById(key);
+        var database = await _factory.CreateAsync(ct);
         await using var stream = new MemoryStream();
         await _serializer.SerializeAsync(stream, obj, ct);
         stream.Position = 0;
 
-        var entity = new ObjectEntity
-        {
-            Key = key,
-            Content = stream.ToArray(),
-            ContentType = _serializer.FileExtension,
-        };
+        await database.ExecuteAsync(
+            db =>
+            {
+                var collection = db.GetObjectEntityCollection();
+                var document = collection.FindById(key);
 
-        await UpdateDocument(database, collection, entity, document, ct);
-    }
+                var entity = new ObjectEntity
+                {
+                    Key = key,
+                    Content = stream.ToArray(),
+                    ContentType = _serializer.FileExtension,
+                };
 
-    private async ValueTask UpdateDocument(
-        IDatabase database,
-        UltraLiteCollection<BsonDocument> collection,
-        ObjectEntity entity,
-        BsonDocument? document,
-        CancellationToken ct
-    )
-    {
-        await using var fin = new FinallyAsync(async () => await database.SaveChangesAsync(ct));
+                if (document is null)
+                {
+                    collection.Insert(entity.ToBsonDocument());
 
-        if (document is null)
-        {
-            collection.Insert(entity.ToBsonDocument());
+                    return;
+                }
 
-            return;
-        }
-
-        collection.Update(entity.ToBsonDocument());
+                collection.Update(entity.ToBsonDocument());
+            },
+            ct
+        );
     }
 }

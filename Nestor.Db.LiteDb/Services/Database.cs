@@ -1,42 +1,75 @@
 using System.Runtime.CompilerServices;
-using Gaia.Helpers;
 using UltraLiteDB;
 
 namespace Nestor.Db.LiteDb.Services;
 
-public interface IDatabase : IDisposable
+public interface IDatabase
 {
-    bool DropCollection(string name);
-    UltraLiteCollection<BsonDocument> GetCollection(string name, BsonAutoId autoId);
-    ConfiguredValueTaskAwaitable SaveChangesAsync(CancellationToken ct);
+    ConfiguredValueTaskAwaitable ExecuteAsync(
+        Action<UltraLiteDatabase> action,
+        CancellationToken ct
+    );
+
+    ConfiguredValueTaskAwaitable<T> ExecuteAsync<T>(
+        Func<UltraLiteDatabase, T> action,
+        CancellationToken ct
+    );
 }
 
 public sealed class Database : IDatabase
 {
-    private readonly UltraLiteDatabase _database;
-
     public Database(UltraLiteDatabase database)
     {
         _database = database;
     }
 
-    public void Dispose()
+    public ConfiguredValueTaskAwaitable ExecuteAsync(
+        Action<UltraLiteDatabase> action,
+        CancellationToken ct
+    )
     {
-        _database.Dispose();
+        return ExecuteCore(action, ct).ConfigureAwait(false);
     }
 
-    public bool DropCollection(string name)
+    public ConfiguredValueTaskAwaitable<T> ExecuteAsync<T>(
+        Func<UltraLiteDatabase, T> action,
+        CancellationToken ct
+    )
     {
-        return _database.DropCollection(name);
+        return ExecuteCore(action, ct).ConfigureAwait(false);
     }
 
-    public UltraLiteCollection<BsonDocument> GetCollection(string name, BsonAutoId autoId)
+    private readonly UltraLiteDatabase _database;
+    private readonly SemaphoreSlim _asyncSemaphore = new(1, 1);
+
+    private async ValueTask ExecuteCore(Action<UltraLiteDatabase> action, CancellationToken ct)
     {
-        return _database.GetCollection(name, autoId);
+        await _asyncSemaphore.WaitAsync(ct);
+
+        try
+        {
+            action(_database);
+        }
+        finally
+        {
+            _asyncSemaphore.Release();
+        }
     }
 
-    public ConfiguredValueTaskAwaitable SaveChangesAsync(CancellationToken ct)
+    private async ValueTask<T> ExecuteCore<T>(
+        Func<UltraLiteDatabase, T> action,
+        CancellationToken ct
+    )
     {
-        return TaskHelper.ConfiguredCompletedTask;
+        await _asyncSemaphore.WaitAsync(ct);
+
+        try
+        {
+            return action(_database);
+        }
+        finally
+        {
+            _asyncSemaphore.Release();
+        }
     }
 }
