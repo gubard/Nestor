@@ -1,27 +1,13 @@
-using System;
-using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
-using Gaia.Helpers;
 using Gaia.Services;
-using Nestor.Db.Helpers;
 using Nestor.Db.Models;
+using Nestor.Db.Services;
 
-namespace Nestor.Db.Services;
+namespace Nestor.Db.LiteDb.Services;
 
-public interface IIdempotenceService
+public sealed class LiteDbIdempotenceService : IIdempotenceService
 {
-    ConfiguredValueTaskAwaitable<T?> GetAsync<T>(Guid id, CancellationToken ct)
-        where T : class;
-
-    ConfiguredValueTaskAwaitable AddAsync(Guid id, object value, CancellationToken ct);
-}
-
-public sealed class IdempotenceService : IIdempotenceService
-{
-    public IdempotenceService(IDbConnectionFactory factory, ISerializer serializer)
+    public LiteDbIdempotenceService(IDatabaseFactory factory, ISerializer serializer)
     {
         _factory = factory;
         _serializer = serializer;
@@ -38,12 +24,12 @@ public sealed class IdempotenceService : IIdempotenceService
         return AddCore(id, value, ct).ConfigureAwait(false);
     }
 
-    private readonly IDbConnectionFactory _factory;
+    private readonly IDatabaseFactory _factory;
     private readonly ISerializer _serializer;
 
     private async ValueTask AddCore(Guid id, object value, CancellationToken ct)
     {
-        await using var session = await _factory.CreateSessionAsync(ct);
+        var database = await _factory.CreateAsync(ct);
         await using var stream = new MemoryStream();
         await _serializer.SerializeAsync(stream, value, ct);
         stream.Position = 0;
@@ -56,29 +42,39 @@ public sealed class IdempotenceService : IIdempotenceService
             Id = id,
         };
 
-        await session.ExecuteNonQueryAsync(new[] { item }.CreateInsertQuery(), ct);
-        await session.CommitAsync(ct);
+        var document = item.ToBsonDocument();
+
+        await database.ExecuteAsync(
+            db =>
+            {
+                var collection = db.GetIdempotentEntityCollection();
+                collection.Insert(document);
+            },
+            ct
+        );
     }
 
     private async ValueTask<T?> GetCore<T>(Guid id, CancellationToken ct)
         where T : class
     {
-        await using var session = await _factory.CreateSessionAsync(ct);
+        var database = await _factory.CreateAsync(ct);
 
-        var query = new SqlQuery(
-            IdempotentsExt.SelectQuery + " WHERE Id = @Id",
-            new QueryParameter("@Id", id)
+        var document = await database.ExecuteAsync(
+            db =>
+            {
+                var collection = db.GetIdempotentEntityCollection();
+
+                return collection.FindById(id);
+            },
+            ct
         );
 
-        await using var reader = await session.ExecuteReaderAsync(query, ct);
-        var items = await reader.ReadIdempotentsAsync(ct).ToEnumerableAsync();
-        var item = items.FirstOrDefault();
-
-        if (item == null)
+        if (document is null)
         {
             return null;
         }
 
+        var item = document.ToIdempotentEntity();
         await using var stream = new MemoryStream(item.Data);
         stream.Position = 0;
 

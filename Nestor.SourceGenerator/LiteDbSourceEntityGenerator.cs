@@ -106,18 +106,14 @@ public sealed class LiteDbSourceEntityGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("}");
         stringBuilder.AppendLine();
         stringBuilder.AppendLine($"var valueCollection = database.Get{type.Name}Collection();");
-        stringBuilder.AppendLine("valueCollection.Edit(edits);");
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("if(isUseEvents)");
         stringBuilder.AppendLine("{");
-        stringBuilder.AppendLine($"var eventCollection = database.GetEventEntityCollection();");
-        stringBuilder.AppendLine($"var ids = edits.Select(x => x.{id.Name}).Distinct().ToArray();");
-        stringBuilder.AppendLine("var index = 0;");
-        stringBuilder.AppendLine("var eventCount = edits.Sum(x => x.GetEdited());");
+        stringBuilder.AppendLine("var eventCollection = database.GetEventEntityCollection();");
         stringBuilder.AppendLine("var now = DateTimeOffset.UtcNow;");
 
         stringBuilder.AppendLine(
-            $"var events = new global::{TypeFullNames.BsonDocument}[eventCount];"
+            $"var events = new global::{TypeFullNames.List}<global::{TypeFullNames.BsonDocument}>();"
         );
 
         stringBuilder.AppendLine();
@@ -135,8 +131,7 @@ public sealed class LiteDbSourceEntityGenerator : IIncrementalGenerator
 
             stringBuilder.AppendLine($"if(edit.IsEdit{property.Name})");
             stringBuilder.AppendLine("{");
-            stringBuilder.AppendLine();
-            stringBuilder.AppendLine($"events[index++] = new global::{TypeFullNames.EventEntity}");
+            stringBuilder.AppendLine($"var document = new global::{TypeFullNames.EventEntity}");
             stringBuilder.AppendLine("{");
             stringBuilder.AppendLine($"EntityId = edit.{id.Name},");
             stringBuilder.AppendLine($"EntityType = nameof(global::{type.GetRealFullName()}),");
@@ -153,13 +148,17 @@ public sealed class LiteDbSourceEntityGenerator : IIncrementalGenerator
             stringBuilder.AppendLine("TransactionId = transactionId,");
             stringBuilder.AppendLine("CreatedAt = now,");
             stringBuilder.AppendLine("}.ToBsonDocument();");
+            stringBuilder.AppendLine("events.Add(document);");
             stringBuilder.AppendLine("}");
             stringBuilder.AppendLine();
         }
 
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine();
         stringBuilder.AppendLine("eventCollection.Insert(events);");
         stringBuilder.AppendLine("}");
-        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine("valueCollection.Edit(edits);");
         stringBuilder.AppendLine("}");
     }
 
