@@ -65,12 +65,12 @@ public sealed class EditModelGenerator : IIncrementalGenerator
                         stringBuilder.AppendLine();
                         CreateEditClass(stringBuilder, type, properties, id);
                         var text = stringBuilder.ToString();
-                        spc.AddSource($"EventEntity.{type}.g.cs", text);
+                        spc.AddSource($"{type}.{nameof(EditModelGenerator)}.g.cs", text);
                     }
                 }
                 catch (Exception e)
                 {
-                    spc.AddSource("EventEntity.g.cs", e.ToString());
+                    spc.AddSource($"{nameof(EditModelGenerator)}.g.cs", e.ToString());
                 }
             }
         );

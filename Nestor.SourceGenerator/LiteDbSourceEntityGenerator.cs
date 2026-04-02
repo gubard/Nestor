@@ -75,12 +75,12 @@ public sealed class LiteDbSourceEntityGenerator : IIncrementalGenerator
                         CreateEditMethod(stringBuilder, type, id, properties);
                         stringBuilder.AppendLine("}");
                         var text = stringBuilder.ToString();
-                        spc.AddSource($"{type}.LiteDbSource.g.cs", text);
+                        spc.AddSource($"{type}.{nameof(LiteDbSourceEntityGenerator)}.g.cs", text);
                     }
                 }
                 catch (Exception e)
                 {
-                    spc.AddSource("LiteDbSource.g.cs", e.ToString());
+                    spc.AddSource($"{nameof(LiteDbSourceEntityGenerator)}.g.cs", e.ToString());
                 }
             }
         );

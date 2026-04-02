@@ -90,12 +90,12 @@ public sealed class AdoSourceEntityGenerator : IIncrementalGenerator
                         CreateExistsMethod(stringBuilder, type, id);
                         stringBuilder.AppendLine("}");
                         var text = stringBuilder.ToString();
-                        spc.AddSource($"EventEntity.{type}.g.cs", text);
+                        spc.AddSource($"{type}.{nameof(AdoSourceEntityGenerator)}.g.cs", text);
                     }
                 }
                 catch (Exception e)
                 {
-                    spc.AddSource("EventEntity.g.cs", e.ToString());
+                    spc.AddSource($"{nameof(AdoSourceEntityGenerator)}.g.cs", e.ToString());
                 }
             }
         );
