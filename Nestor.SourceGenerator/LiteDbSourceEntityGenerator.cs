@@ -58,6 +58,7 @@ public sealed class LiteDbSourceEntityGenerator : IIncrementalGenerator
                         stringBuilder.AppendLine("#nullable enable");
                         stringBuilder.AppendLine();
                         stringBuilder.AppendLine("using System;");
+                        stringBuilder.AppendLine("using System.Linq;");
                         stringBuilder.AppendLine("using Nestor.Db.Models;");
                         stringBuilder.AppendLine();
                         stringBuilder.AppendLine($"namespace {type.GetNamespace()};");
