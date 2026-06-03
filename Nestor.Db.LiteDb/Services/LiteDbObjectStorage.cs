@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using Gaia.Services;
 using Nestor.Db.Models;
+using Nestor.Db.Services;
 
 namespace Nestor.Db.LiteDb.Services;
 

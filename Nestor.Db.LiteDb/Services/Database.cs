@@ -3,19 +3,6 @@ using UltraLiteDB;
 
 namespace Nestor.Db.LiteDb.Services;
 
-public interface IDatabase
-{
-    ConfiguredValueTaskAwaitable ExecuteAsync(
-        Action<UltraLiteDatabase> action,
-        CancellationToken ct
-    );
-
-    ConfiguredValueTaskAwaitable<T> ExecuteAsync<T>(
-        Func<UltraLiteDatabase, T> action,
-        CancellationToken ct
-    );
-}
-
 public sealed class Database : IDatabase
 {
     public Database(UltraLiteDatabase database)

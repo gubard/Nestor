@@ -60,6 +60,7 @@ public sealed class AdoSqliteGenerator : IIncrementalGenerator
                         stringBuilder.AppendLine("#nullable enable");
                         stringBuilder.AppendLine();
                         stringBuilder.AppendLine("using System.Linq;");
+                        stringBuilder.AppendLine("using Nestor.Db.Helpers;");
                         stringBuilder.AppendLine("using System.Data;");
                         stringBuilder.AppendLine("using System;");
                         stringBuilder.AppendLine("using System.Threading.Tasks;");
@@ -99,6 +100,7 @@ public sealed class AdoSqliteGenerator : IIncrementalGenerator
                         AddCreateUpdateMethod(stringBuilder, type, id, properties);
                         stringBuilder.AppendLine();
                         AddExistsMethod(stringBuilder, type, id);
+                        AddGetByIdA(stringBuilder, type, properties, id);
                         stringBuilder.AppendLine("}");
 
                         spc.AddSource(
@@ -482,6 +484,64 @@ public sealed class AdoSqliteGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("}");
     }
 
+    private void AddGetByIdA(
+        CSharpStringBuilder stringBuilder,
+        INamedTypeSymbol type,
+        IPropertySymbol[] properties,
+        IPropertySymbol id
+    )
+    {
+        stringBuilder.AppendLine(
+            $"public static global::{TypeFullNames.ConfiguredValueTaskAwaitable}<global::{type}?> Get{type.GetTableName()}ByIdAsync("
+        );
+
+        stringBuilder.AppendLine($"this global::{TypeFullNames.DbCommand} command,");
+        stringBuilder.AppendLine($"global::{id.Type.GetRealFullName()} id,");
+        stringBuilder.AppendLine($"global::{TypeFullNames.CancellationToken} ct)");
+        stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine(
+            $"return Get{type.GetTableName()}ByIdCore(command, id, ct).ConfigureAwait(false);"
+        );
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine();
+
+        stringBuilder.AppendLine(
+            $"private static async global::{TypeFullNames.ValueTask}<global::{type}?> Get{type.GetTableName()}ByIdCore("
+        );
+
+        stringBuilder.AppendLine($"this global::{TypeFullNames.DbCommand} command,");
+        stringBuilder.AppendLine($"global::{id.Type.GetRealFullName()} id,");
+        stringBuilder.AppendLine($"global::{TypeFullNames.CancellationToken} ct)");
+
+        stringBuilder.AppendLine("{");
+
+        stringBuilder.AppendLine(
+            $"await using var reader = await command.ExecuteReaderAsync(new global::{TypeFullNames.SqlQuery}(\"SELECT * FROM {type.GetTableName()} WHERE {id.Name} = @id\", new global::{TypeFullNames.QueryParameter}(\"@id\", id)), ct);"
+        );
+
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine("if(!reader.HasRows)");
+        stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine("return null;");
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine("while (await reader.ReadAsync(ct))");
+        stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine(" return new()");
+        stringBuilder.AppendLine("{");
+
+        foreach (var property in properties)
+        {
+            stringBuilder.AppendLine($"{property.Name} = {ReadProperty(property)},");
+        }
+
+        stringBuilder.AppendLine("};");
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine("return null;");
+        stringBuilder.AppendLine("}");
+    }
+
     private void AddReadMethodA(
         CSharpStringBuilder stringBuilder,
         INamedTypeSymbol type,
@@ -528,6 +588,48 @@ public sealed class AdoSqliteGenerator : IIncrementalGenerator
         }
 
         stringBuilder.AppendLine("};");
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine("}");
+
+        stringBuilder.AppendLine(
+            $"public static global::{TypeFullNames.ConfiguredCancelableAsyncEnumerable}<global::{type}> Read{type.GetTableName()}Async("
+        );
+
+        stringBuilder.AppendLine($"this global::{TypeFullNames.DbCommand} command,");
+        stringBuilder.AppendLine($"global::{TypeFullNames.SqlQuery} query,");
+        stringBuilder.AppendLine($"global::{TypeFullNames.CancellationToken} ct)");
+        stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine(
+            $"return Read{type.GetTableName()}Core(command, query, ct).ConfigureAwait(false);"
+        );
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine();
+
+        stringBuilder.AppendLine(
+            $"private static async global::{TypeFullNames.IAsyncEnumerable}<global::{type}> Read{type.GetTableName()}Core("
+        );
+
+        stringBuilder.AppendLine($"this global::{TypeFullNames.DbCommand} command,");
+        stringBuilder.AppendLine($"global::{TypeFullNames.SqlQuery} query,");
+
+        stringBuilder.AppendLine(
+            $"[global::{TypeFullNames.EnumeratorCancellation}]global::{TypeFullNames.CancellationToken} ct)"
+        );
+
+        stringBuilder.AppendLine("{");
+
+        stringBuilder.AppendLine(
+            "await using var reader = await command.ExecuteReaderAsync(query, ct);"
+        );
+
+        stringBuilder.AppendLine();
+
+        stringBuilder.AppendLine(
+            $"await foreach(var row in reader.Read{type.GetTableName()}Async(ct))"
+        );
+
+        stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine("yield return row;");
         stringBuilder.AppendLine("}");
         stringBuilder.AppendLine("}");
     }

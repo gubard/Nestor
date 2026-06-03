@@ -41,6 +41,7 @@ public static class TypeFullNames
     public const string ReadOnlyMemory = "System.ReadOnlyMemory";
     public const string DBNull = "System.DBNull";
     public const string DbDataReader = "System.Data.Common.DbDataReader";
+    public const string DbCommand = "System.Data.Common.DbCommand";
     public const string DbSession = "Nestor.Db.Services.DbSession";
     public const string DateTimeOffset = "System.DateTimeOffset";
     public const string Stream = "System.IO.Stream";

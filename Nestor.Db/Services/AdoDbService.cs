@@ -83,7 +83,7 @@ public abstract class AdoDbService<TGetRequest, TPostRequest, TGetResponse, TPos
         return ClearEventsCore(ct).ConfigureAwait(false);
     }
 
-    protected readonly IDbConnectionFactory Factory;
+    protected readonly IAdoDatabaseFactory Factory;
 
     protected abstract ConfiguredValueTaskAwaitable ExecuteAsync(
         Guid idempotentId,
@@ -92,18 +92,44 @@ public abstract class AdoDbService<TGetRequest, TPostRequest, TGetResponse, TPos
         CancellationToken ct
     );
 
-    protected AdoDbService(IDbConnectionFactory factory, params string[] eventEntityTypes)
+    protected AdoDbService(IAdoDatabaseFactory factory, params string[] eventEntityTypes)
     {
         Factory = factory;
         _eventEntityTypes = eventEntityTypes.ToArray();
     }
 
-    private async ValueTask ClearEventsCore(CancellationToken ct)
+    private readonly string[] _eventEntityTypes;
+
+    public async ValueTask<EventEntity[]> GetEventsCore(CancellationToken ct)
     {
-        await Factory.ExecuteNonQueryAsync(EventsExt.DeleteQuery, ct);
+        var database = await Factory.CreateAsync(ct);
+
+        return await database.ExecuteAsync(
+            async command =>
+            {
+                await using var reader = await command.ExecuteReaderAsync(
+                    new SqlQuery(
+                        EventsExt.SelectQuery
+                            + $" WHERE EntityType IN ({_eventEntityTypes.ToParameterNames("EntityType")})",
+                        _eventEntityTypes.ToQueryParameters("EntityType")
+                    ),
+                    ct
+                );
+
+                var events = await reader.ReadEventsAsync(ct).ToEnumerableAsync();
+
+                return events.ToArray();
+            },
+            ct
+        );
     }
 
-    private readonly string[] _eventEntityTypes;
+    private async ValueTask ClearEventsCore(CancellationToken ct)
+    {
+        var database = await Factory.CreateAsync(ct);
+
+        await database.ExecuteAsync(c => c.ExecuteNonQueryAsync(EventsExt.DeleteQuery, ct), ct);
+    }
 
     private async ValueTask<TPostResponse> PostCore(
         Guid idempotentId,
@@ -120,50 +146,37 @@ public abstract class AdoDbService<TGetRequest, TPostRequest, TGetResponse, TPos
             return response;
         }
 
-        await using var session = await Factory.CreateSessionAsync(ct);
+        var database = await Factory.CreateAsync(ct);
 
-        foreach (var e in request.Events)
-        {
-            var selectQuery = new SqlQuery(
-                $"SELECT Id FROM {e.GetTableName()} WHERE Id = @Id",
-                new QueryParameter("@Id", e.EntityId)
-            );
-
-            var ids = await session.GetGuidAsync(selectQuery, ct);
-
-            if (ids.Length == 0)
+        await database.ExecuteAsync(
+            async command =>
             {
-                var insetQuery = InsertHelper.CreateDefaultInsert(e.EntityType, e.EntityId);
-                await session.ExecuteNonQueryAsync(insetQuery, ct);
-            }
+                foreach (var e in request.Events)
+                {
+                    var selectQuery = new SqlQuery(
+                        $"SELECT Id FROM {e.GetTableName()} WHERE Id = @Id",
+                        new QueryParameter("@Id", e.EntityId)
+                    );
 
-            var query = e.ToSqlQuery();
-            await session.ExecuteNonQueryAsync(query, ct);
-            await session.ExecuteNonQueryAsync(new[] { e }.CreateInsertQuery(), ct);
-        }
+                    var ids = await command.GetGuidAsync(selectQuery, ct);
 
-        await session.CommitAsync(ct);
+                    if (ids.Length == 0)
+                    {
+                        var insetQuery = InsertHelper.CreateDefaultInsert(e.EntityType, e.EntityId);
+                        await command.ExecuteNonQueryAsync(insetQuery, ct);
+                    }
+
+                    var query = e.ToSqlQuery();
+                    await command.ExecuteNonQueryAsync(query, ct);
+                    await command.ExecuteNonQueryAsync(new[] { e }.CreateInsertQuery(), ct);
+                }
+            },
+            ct
+        );
+
         response.IsEventSaved = true;
         await ExecuteAsync(idempotentId, response, request, ct);
 
         return response;
-    }
-
-    private async ValueTask<EventEntity[]> GetEventsCore(CancellationToken ct)
-    {
-        await using var session = await Factory.CreateSessionAsync(ct);
-
-        await using var reader = await session.ExecuteReaderAsync(
-            new(
-                EventsExt.SelectQuery
-                    + $" WHERE EntityType IN ({_eventEntityTypes.ToParameterNames("EntityType")})",
-                _eventEntityTypes.ToQueryParameters("EntityType")
-            ),
-            ct
-        );
-
-        var events = await reader.ReadEventsAsync(ct).ToEnumerableAsync();
-
-        return events.ToArray();
     }
 }
