@@ -118,7 +118,7 @@ public sealed class LiteDbGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("{");
 
         stringBuilder.AppendLine(
-            $"var document = collection.FindById(new global::{TypeFullNames.BsonValue}(edit.{id.Name}));"
+            $"var document = collection.FindById(edit.{id.Name}{GetToBsonValue(id)});"
         );
 
         foreach (var property in properties)
@@ -199,7 +199,9 @@ public sealed class LiteDbGenerator : IIncrementalGenerator
             {
                 if (!isAutoIncrementId)
                 {
-                    stringBuilder.AppendLine($"document[\"_id\"] = value.{property.Name};");
+                    stringBuilder.AppendLine(
+                        $"document[\"_id\"] = value.{property.Name}{GetToBsonValue(property)};"
+                    );
                 }
 
                 continue;
@@ -220,7 +222,7 @@ public sealed class LiteDbGenerator : IIncrementalGenerator
         return GetToBsonValue(property.Type);
     }
 
-    private string GetToValue(IPropertySymbol property)
+    private string GetToValue(IPropertySymbol property, string name)
     {
         var value = GetToValue(property.Type);
 
@@ -230,16 +232,16 @@ public sealed class LiteDbGenerator : IIncrementalGenerator
             {
                 if (property.Type.IsValueType)
                 {
-                    return $"document.Get{((INamedTypeSymbol)property.Type).TypeArguments[0].GetRealName()}(\"{property.Name}\")";
+                    return $"document.Get{((INamedTypeSymbol)property.Type).TypeArguments[0].GetRealName()}(\"{name}\")";
                 }
                 else
                 {
-                    return $"document.Get{property.Type.GetRealName()}(\"{property.Name}\")";
+                    return $"document.Get{property.Type.GetRealName()}(\"{name}\")";
                 }
             }
         }
 
-        return $"document[\"{property.Name}\"]{value}";
+        return $"document[\"{name}\"]{value}";
     }
 
     private string GetToValue(ITypeSymbol symbol)
@@ -332,12 +334,12 @@ public sealed class LiteDbGenerator : IIncrementalGenerator
         {
             if (property.Name == id.Name)
             {
-                stringBuilder.AppendLine($"{property.Name} = document[\"_id\"],");
+                stringBuilder.AppendLine($"{property.Name} =  {GetToValue(property, "_id")},");
 
                 continue;
             }
 
-            stringBuilder.AppendLine($"{property.Name} = {GetToValue(property)},");
+            stringBuilder.AppendLine($"{property.Name} = {GetToValue(property, property.Name)},");
         }
 
         stringBuilder.AppendLine("};");
