@@ -1,15 +1,16 @@
 ﻿using System.Collections.Frozen;
 using System.Collections.Generic;
+using Nestor.Db.Models;
 
 namespace Nestor.Db.Helpers;
 
 public static class SqliteMigration
 {
-    public static readonly FrozenDictionary<int, string> Migrations;
+    public static readonly FrozenDictionary<int, SqlQuery> Migrations;
 
     static SqliteMigration()
     {
-        Migrations = new Dictionary<int, string>
+        Migrations = new Dictionary<int, SqlQuery>
         {
             {
                 1,
@@ -56,7 +57,7 @@ CREATE TABLE IF NOT EXISTS Events (
 "
             },
             {
-                18,
+                3,
                 @"
 CREATE TABLE IF NOT EXISTS Objects (
     Key TEXT PRIMARY KEY NOT NULL,

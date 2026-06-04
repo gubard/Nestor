@@ -267,6 +267,24 @@ public sealed class AdoSqliteGenerator : IIncrementalGenerator
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("return new(sql, parameters.ToArray());");
         stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine($"public static {TypeFullNames.SqlQuery} CreateInsertQuery(");
+        stringBuilder.AppendLine($"this global::{type} value)");
+        stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine();
+
+        stringBuilder.AppendLine(
+            $"var parameters = new global::{TypeFullNames.List}<{TypeFullNames.QueryParameter}>({properties.Length});"
+        );
+
+        stringBuilder.AppendLine(
+            $"var sql = \"INSERT INTO {type.GetTableName()} ({string.Join(", ", properties.Select(x => x.Name))}) VALUES ({string.Join(", ", properties.Select(x => $"@{x.Name}"))}); SELECT last_insert_rowid();\";"
+        );
+
+        stringBuilder.AppendLine("parameters.AddRange(value.GetDbParameters(string.Empty));");
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine("return new(sql, parameters.ToArray());");
+        stringBuilder.AppendLine("}");
     }
 
     private void AddCreateUpdateMethod(
