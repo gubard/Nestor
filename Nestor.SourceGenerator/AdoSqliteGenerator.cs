@@ -429,6 +429,7 @@ public sealed class AdoSqliteGenerator : IIncrementalGenerator
             $"public const string SelectQuery = \"SELECT * FROM {type.GetTableName()}\";"
         );
 
+        stringBuilder.AppendLine($"public const string TableName = \"{type.GetTableName()}\";");
         stringBuilder.AppendLine();
 
         stringBuilder.AppendLine(
