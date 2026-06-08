@@ -50,4 +50,5 @@ public static class TypeFullNames
     public const string TimeOnly = "System.TimeOnly";
     public const string TimeSpan = "System.TimeSpan";
     public const string IAsyncEnumerable = "System.Collections.Generic.IAsyncEnumerable";
+    public const string BitConverter = "System.BitConverter";
 }

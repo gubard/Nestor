@@ -142,7 +142,7 @@ public sealed class AdoSqliteGenerator : IIncrementalGenerator
         foreach (var property in properties)
         {
             stringBuilder.AppendLine(
-                $"new global::{TypeFullNames.QueryParameter}($\"@{{nameof(value.{property.Name})}}{{postfix}}\", value.{property.Name}),"
+                $"new global::{TypeFullNames.QueryParameter}($\"@{{nameof(value.{property.Name})}}{{postfix}}\", {WriteProperty(property)}),"
             );
         }
 
@@ -194,7 +194,7 @@ public sealed class AdoSqliteGenerator : IIncrementalGenerator
         foreach (var property in properties)
         {
             stringBuilder.AppendLine(
-                $"case nameof(value.{property.Name}): return value.{property.Name};"
+                $"case nameof(value.{property.Name}): return {WriteProperty(property)};"
             );
         }
 
@@ -710,6 +710,22 @@ public sealed class AdoSqliteGenerator : IIncrementalGenerator
         return ReadProperty(property.Type.ToString(), property.Name);
     }
 
+    private string WriteProperty(IPropertySymbol property)
+    {
+        if (
+            property.Type is INamedTypeSymbol
+            {
+                TypeKind: TypeKind.Enum,
+                EnumUnderlyingType: not null,
+            } named
+        )
+        {
+            return $"(global::{property.Type}){WriteProperty(named.EnumUnderlyingType.ToString(), property.Name)}";
+        }
+
+        return WriteProperty(property.Type.ToString(), property.Name);
+    }
+
     private string ReadProperty(string propertyType, string propertyName)
     {
         return propertyType switch
@@ -721,7 +737,8 @@ public sealed class AdoSqliteGenerator : IIncrementalGenerator
             "byte" => $"reader.GetByte(\"{propertyName}\")",
             "ushort" => $"(ushort)reader.GetInt32(\"{propertyName}\")",
             "uint" => $"(uint)reader.GetInt64(\"{propertyName}\")",
-            "ulong" => $"reader.GetFieldValue<ulong>(\"{propertyName}\")",
+            "ulong" =>
+                $"global::{TypeFullNames.BitConverter}.ToUInt64(global::{TypeFullNames.BitConverter}.GetBytes(reader.GetInt64(\"{propertyName}\")))",
             "sbyte" => $"(sbyte)reader.GetInt16(\"{propertyName}\")",
             "short" => $"reader.GetInt16(\"{propertyName}\")",
             "float" => $"reader.GetFloat(\"{propertyName}\")",
@@ -730,18 +747,58 @@ public sealed class AdoSqliteGenerator : IIncrementalGenerator
             "char" => $"reader.GetChar(\"{propertyName}\")",
             "byte[]" => $"ToByteArray(reader.GetStream(\"{propertyName}\"))",
             TypeFullNames.TimeOnly =>
-                $"global::{TypeFullNames.TimeOnly}.Parse(reader.GetString(\"{propertyName}\"))",
+                $"new global::{TypeFullNames.TimeOnly}(reader.GetInt64(\"{propertyName}\"))",
             TypeFullNames.TimeSpan =>
-                $"global::{TypeFullNames.TimeSpan}.Parse(reader.GetString(\"{propertyName}\"))",
+                $"new global::{TypeFullNames.TimeSpan}(reader.GetInt64(\"{propertyName}\"))",
             TypeFullNames.DateOnly =>
-                $"global::{TypeFullNames.DateOnly}.Parse(reader.GetString(\"{propertyName}\"))",
-            TypeFullNames.DateTime => $"reader.GetDateTime(\"{propertyName}\")",
+                $"global::{TypeFullNames.DateOnly}.FromDayNumber(reader.GetInt32(\"{propertyName}\"))",
+            TypeFullNames.DateTime =>
+                $"new global::{TypeFullNames.DateTime}(reader.GetInt64(\"{propertyName}\"))",
             TypeFullNames.DateTimeOffset =>
-                $"global::{TypeFullNames.DateTimeOffset}.Parse(reader.GetString(\"{propertyName}\"))",
+                $"new global::{TypeFullNames.DateTimeOffset}(reader.GetInt64(\"{propertyName}\"), global::{TypeFullNames.TimeSpan}.Zero)",
             TypeFullNames.Guid =>
                 $"global::{TypeFullNames.Guid}.Parse(reader.GetString(\"{propertyName}\"))",
             _ => propertyType.EndsWith("?")
                 ? $"reader.IsDBNull(\"{propertyName}\") ? null : {ReadProperty(propertyType.Substring(0, propertyType.Length - 1), propertyName)}"
+                : propertyType,
+        };
+    }
+
+    private string WriteProperty(string propertyType, string propertyName, bool isNullable = false)
+    {
+        var nullableSuffix = isNullable ? "?" : "";
+
+        return propertyType switch
+        {
+            "bool" => $"value.{propertyName}",
+            "int" => $"value.{propertyName}",
+            "string" => $"value.{propertyName}",
+            "long" => $"value.{propertyName}",
+            "byte" => $"value.{propertyName}",
+            "ushort" => $"value.{propertyName}",
+            "uint" => $"value.{propertyName}",
+            "ulong" => isNullable
+                ? $"value.{propertyName}.HasValue ? global::{TypeFullNames.BitConverter}.ToInt64(global::{TypeFullNames.BitConverter}.GetBytes(value.{propertyName}.Value)) : null"
+                : $"global::{TypeFullNames.BitConverter}.ToInt64(global::{TypeFullNames.BitConverter}.GetBytes(value.{propertyName}))",
+            "sbyte" => $"value.{propertyName}",
+            "short" => $"value.{propertyName}",
+            "float" => $"value.{propertyName}",
+            "double" => $"value.{propertyName}",
+            "decimal" => $"value.{propertyName}",
+            "char" => $"value.{propertyName}",
+            "byte[]" => $"value.{propertyName}",
+            TypeFullNames.TimeOnly => $"value.{propertyName}{nullableSuffix}.Ticks",
+            TypeFullNames.TimeSpan => $"value.{propertyName}{nullableSuffix}.Ticks",
+            TypeFullNames.DateOnly => $"value.{propertyName}{nullableSuffix}.DayNumber",
+            TypeFullNames.DateTime => $"value.{propertyName}{nullableSuffix}.Ticks",
+            TypeFullNames.DateTimeOffset => $"value.{propertyName}{nullableSuffix}.UtcTicks",
+            TypeFullNames.Guid => $"value.{propertyName}",
+            _ => propertyType.EndsWith("?")
+                ? WriteProperty(
+                    propertyType.Substring(0, propertyType.Length - 1),
+                    propertyName,
+                    true
+                )
                 : propertyType,
         };
     }
