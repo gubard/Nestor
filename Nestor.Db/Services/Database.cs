@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -44,30 +45,48 @@ public sealed class AdoDatabase : IAdoDatabase
         return ExecuteCore(action, ct).ConfigureAwait(false);
     }
 
+    private static ConcurrentDictionary<string, SemaphoreSlim> _dbLocks = [];
+    private readonly IDbConnectionFactory _factory;
+
+    private SemaphoreSlim CreateSemaphoreSlim()
+    {
+        return new SemaphoreSlim(1, 1);
+    }
+
     private async ValueTask<T> ExecuteCore<T>(
         Func<DbCommand, ConfiguredValueTaskAwaitable<T>> action,
         CancellationToken ct
     )
     {
         await using var connection = _factory.Create();
-        await connection.OpenAsync(ct);
-        await using var transaction = await connection.BeginTransactionAsync(ct);
-        T result;
+        var dbLock = _dbLocks.GetOrAdd(connection.ConnectionString, _ => CreateSemaphoreSlim());
+        await dbLock.WaitAsync(ct);
 
         try
         {
-            result = await action.Invoke(connection.CreateCommand());
+            await connection.OpenAsync(ct);
+            await using var transaction = await connection.BeginTransactionAsync(ct);
+            T result;
+
+            try
+            {
+                result = await action.Invoke(connection.CreateCommand());
+            }
+            catch
+            {
+                await transaction.RollbackAsync(ct);
+
+                throw;
+            }
+
+            await transaction.CommitAsync(ct);
+
+            return result;
         }
-        catch
+        finally
         {
-            await transaction.RollbackAsync(ct);
-
-            throw;
+            dbLock.Release();
         }
-
-        await transaction.CommitAsync(ct);
-
-        return result;
     }
 
     private async ValueTask ExecuteCore(
@@ -76,22 +95,30 @@ public sealed class AdoDatabase : IAdoDatabase
     )
     {
         await using var connection = _factory.Create();
-        await connection.OpenAsync(ct);
-        await using var transaction = await connection.BeginTransactionAsync(ct);
+        var dbLock = _dbLocks.GetOrAdd(connection.ConnectionString, _ => CreateSemaphoreSlim());
+        await dbLock.WaitAsync(ct);
 
         try
         {
-            await action.Invoke(connection.CreateCommand());
+            await connection.OpenAsync(ct);
+            await using var transaction = await connection.BeginTransactionAsync(ct);
+
+            try
+            {
+                await action.Invoke(connection.CreateCommand());
+            }
+            catch
+            {
+                await transaction.RollbackAsync(ct);
+
+                throw;
+            }
+
+            await transaction.CommitAsync(ct);
         }
-        catch
+        finally
         {
-            await transaction.RollbackAsync(ct);
-
-            throw;
+            dbLock.Release();
         }
-
-        await transaction.CommitAsync(ct);
     }
-
-    private readonly IDbConnectionFactory _factory;
 }
