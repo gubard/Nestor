@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Gaia.Helpers;
 using Gaia.Services;
+using Microsoft.Extensions.Logging;
 using Nestor.Db.Helpers;
 using Nestor.Db.Models;
 
@@ -84,6 +85,7 @@ public abstract class AdoDbService<TGetRequest, TPostRequest, TGetResponse, TPos
     }
 
     protected readonly IAdoDatabaseFactory Factory;
+    protected readonly ILogger _logger;
 
     protected abstract ConfiguredValueTaskAwaitable ExecuteAsync(
         Guid idempotentId,
@@ -92,9 +94,14 @@ public abstract class AdoDbService<TGetRequest, TPostRequest, TGetResponse, TPos
         CancellationToken ct
     );
 
-    protected AdoDbService(IAdoDatabaseFactory factory, params string[] eventEntityTypes)
+    protected AdoDbService(
+        IAdoDatabaseFactory factory,
+        ILogger logger,
+        params string[] eventEntityTypes
+    )
     {
         Factory = factory;
+        _logger = logger;
         _eventEntityTypes = eventEntityTypes.ToArray();
     }
 
@@ -137,11 +144,14 @@ public abstract class AdoDbService<TGetRequest, TPostRequest, TGetResponse, TPos
         CancellationToken ct
     )
     {
+        var ticks = Environment.TickCount64;
+        _logger.StartPostRequest();
         var response = new TPostResponse();
 
         if (request.Events.Length == 0)
         {
             await ExecuteAsync(idempotentId, response, request, ct);
+            _logger.EndPostRequest(TimeSpan.FromTicks(Environment.TickCount64 - ticks));
 
             return response;
         }
@@ -176,6 +186,7 @@ public abstract class AdoDbService<TGetRequest, TPostRequest, TGetResponse, TPos
 
         response.IsEventSaved = true;
         await ExecuteAsync(idempotentId, response, request, ct);
+        _logger.EndPostRequest(TimeSpan.FromTicks(Environment.TickCount64 - ticks));
 
         return response;
     }
