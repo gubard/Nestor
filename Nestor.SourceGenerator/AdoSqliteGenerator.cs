@@ -417,6 +417,45 @@ public sealed class AdoSqliteGenerator : IIncrementalGenerator
         );
 
         stringBuilder.AppendLine("}");
+
+        stringBuilder.AppendLine(
+            $"private static async global::{TypeFullNames.ValueTask}<global::{id.Type.GetRealFullName()}[]> ReadExists{type.GetTableName()}Core(this global::{TypeFullNames.DbCommand} command, global::{id.Type.GetRealFullName()}[] ids, global::{TypeFullNames.CancellationToken} ct)"
+        );
+
+        stringBuilder.AppendLine("{");
+
+        stringBuilder.AppendLine($"var query = CreateSelectExists{type.GetTableName()}Query(ids);");
+
+        stringBuilder.AppendLine(
+            "await using var reader = await command.ExecuteReaderAsync(query, ct);"
+        );
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine("if (!reader.HasRows)");
+        stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine("return [];");
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine(
+            $"var result = new global::{TypeFullNames.List}<global::{id.Type.GetRealFullName()}>();"
+        );
+        stringBuilder.AppendLine("while (reader.Read())");
+        stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine($"result.Add({ReadProperty(id)});");
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine("return result.ToArray();");
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine(
+            $"public static global::{TypeFullNames.ConfiguredValueTaskAwaitable}<global::{id.Type.GetRealFullName()}[]> ReadExists{type.GetTableName()}Async(this global::{TypeFullNames.DbCommand} command, global::{id.Type.GetRealFullName()}[] ids, global::{TypeFullNames.CancellationToken} ct)"
+        );
+
+        stringBuilder.AppendLine("{");
+
+        stringBuilder.AppendLine(
+            $"return ReadExists{type.GetTableName()}Core(command, ids, ct).ConfigureAwait(false);"
+        );
+
+        stringBuilder.AppendLine("}");
     }
 
     private void AddSelectMethod(
