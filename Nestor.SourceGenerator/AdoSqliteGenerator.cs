@@ -124,7 +124,7 @@ public sealed class AdoSqliteGenerator : IIncrementalGenerator
     )
     {
         stringBuilder.AppendLine(
-            $"public static global::{TypeFullNames.QueryParameter}[] GetDbParameters("
+            $"public static global::{TypeFullNames.QueryParameter}[] GetQueryParameters("
         );
 
         stringBuilder.AppendLine($"this global::{type} value,");
@@ -255,7 +255,9 @@ public sealed class AdoSqliteGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("for(var i = 0; i < values.Length; i++)");
         stringBuilder.AppendLine("{");
 
-        stringBuilder.AppendLine("parameters.AddRange(values[i].GetDbParameters(i.ToString()));");
+        stringBuilder.AppendLine(
+            "parameters.AddRange(values[i].GetQueryParameters(i.ToString()));"
+        );
 
         stringBuilder.AppendLine(
             $"valueNames[i] = $\"({string.Join(", ", properties.Select(x => $"@{x.Name}{{i}}"))})\";"
@@ -281,7 +283,7 @@ public sealed class AdoSqliteGenerator : IIncrementalGenerator
             $"var sql = \"INSERT INTO {type.GetTableName()} ({string.Join(", ", properties.Select(x => x.Name))}) VALUES ({string.Join(", ", properties.Select(x => $"@{x.Name}"))}); SELECT last_insert_rowid();\";"
         );
 
-        stringBuilder.AppendLine("parameters.AddRange(value.GetDbParameters(string.Empty));");
+        stringBuilder.AppendLine("parameters.AddRange(value.GetQueryParameters(string.Empty));");
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("return new(sql, parameters.ToArray());");
         stringBuilder.AppendLine("}");
@@ -343,20 +345,25 @@ public sealed class AdoSqliteGenerator : IIncrementalGenerator
             $"public static global::{TypeFullNames.SqlQuery} CreateUpdate{type.GetTableName()}Query("
         );
 
-        stringBuilder.AppendLine($"this global::{type.GetRealFullName()} item,");
+        stringBuilder.AppendLine($"this global::{type.GetRealFullName()}[] items,");
 
         stringBuilder.AppendLine(
             $"params global::{TypeFullNames.ReadOnlySpan}<string> propertyNames)"
         );
 
         stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine("var sql = string.Empty;");
 
         stringBuilder.AppendLine(
-            "var parameters = item.GetDbParameters(string.Empty, propertyNames);"
+            $"var parameters = new global::{TypeFullNames.List}<global::{TypeFullNames.QueryParameter}>();"
         );
 
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine("for(var index = 0; index < items.Length; index++)");
+        stringBuilder.AppendLine("{");
+        stringBuilder.AppendLine("var item = items[index];");
         stringBuilder.AppendLine(
-            $"var sql = $\"UPDATE {type.GetTableName()} SET {string.Join(", ", properties.Where(x => x.Name != id.Name).Select(x => $"{x.Name} = @{x.Name}"))} WHERE {id.Name} = @{id.Name}\";"
+            "parameters.AddRange(item.GetQueryParameters(index.ToString(), propertyNames));"
         );
 
         stringBuilder.AppendLine();
@@ -364,12 +371,21 @@ public sealed class AdoSqliteGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("{");
 
         stringBuilder.AppendLine(
-            $"sql = $\"UPDATE {type.GetTableName()} SET {{string.Join(\", \", propertyNames.ToArray().Where(x => x != \"{id.Name}\").Select(x => $\"{{x}} = @{{x}}\"))}} WHERE {id.Name} = @{id.Name}\";"
+            $"sql += $\"UPDATE {type.GetTableName()} SET {{string.Join(\", \", propertyNames.ToArray().Where(x => x != \"{id.Name}\").Select(x => $\"{{x}} = @{{x}}{{index}}\"))}} WHERE {id.Name} = @{id.Name}{{index}};{{{TypeFullNames.Environment}.NewLine}}\";"
         );
 
         stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine("else");
+        stringBuilder.AppendLine("{");
+
+        stringBuilder.AppendLine(
+            $"sql += $\"UPDATE {type.GetTableName()} SET {string.Join(", ", properties.Where(x => x.Name != id.Name).Select(x => $"{x.Name} = @{x.Name}{{index}}"))} WHERE {id.Name} = @{id.Name}{{index}};{{{TypeFullNames.Environment}.NewLine}}\";"
+        );
+
+        stringBuilder.AppendLine("}");
+        stringBuilder.AppendLine("}");
         stringBuilder.AppendLine();
-        stringBuilder.AppendLine("return new(sql, parameters);");
+        stringBuilder.AppendLine("return new(sql, parameters.ToArray());");
         stringBuilder.AppendLine("}");
     }
 
