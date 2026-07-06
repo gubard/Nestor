@@ -312,7 +312,7 @@ public sealed class AdoSqliteGenerator : IIncrementalGenerator
         );
 
         stringBuilder.AppendLine(
-            $"parameters[0] = new global::{TypeFullNames.QueryParameter}(\"@{id.Name}\", id);"
+            $"parameters[0] = new global::{TypeFullNames.QueryParameter}(\"@{id.Name}\", {WriteProperty(id).Replace($"value.{id.Name}", "id")});"
         );
         stringBuilder.AppendLine();
         stringBuilder.AppendLine("for(var i = 0; i < updates.Length; i++)");
@@ -590,7 +590,7 @@ public sealed class AdoSqliteGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("{");
 
         stringBuilder.AppendLine(
-            $"await using var reader = await command.ExecuteReaderAsync(new global::{TypeFullNames.SqlQuery}(\"SELECT * FROM {type.GetTableName()} WHERE {id.Name} = @id\", new global::{TypeFullNames.QueryParameter}(\"@id\", id)), ct);"
+            $"await using var reader = await command.ExecuteReaderAsync(new global::{TypeFullNames.SqlQuery}(\"SELECT * FROM {type.GetTableName()} WHERE {id.Name} = @id\", new global::{TypeFullNames.QueryParameter}(\"@id\", {WriteProperty(id).Replace($"value.{id.Name}", "id")})), ct);"
         );
 
         stringBuilder.AppendLine();
