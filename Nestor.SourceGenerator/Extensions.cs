@@ -23,14 +23,14 @@ public static class Extensions
 
     public static string GetEntityValueName(this IPropertySymbol property)
     {
-        return GetEntityValueName(property.Type);
+        return property.Type.GetEntityValueName();
     }
 
     private static string GetEntityValueName(this ITypeSymbol type)
     {
         if (type is INamedTypeSymbol { Name: "Nullable" } named)
         {
-            return GetEntityValueName(named.TypeArguments[0]);
+            return named.TypeArguments[0].GetEntityValueName();
         }
 
         if (type is IArrayTypeSymbol array)

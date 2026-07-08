@@ -28,7 +28,7 @@ public static class DbSessionExtension
         CancellationToken ct
     )
     {
-        return GetGuidCore(session, query, ct).ConfigureAwait(false);
+        return session.GetGuidCore(query, ct).ConfigureAwait(false);
     }
 
     private static async ValueTask<Guid[]> GetGuidCore(

@@ -16,7 +16,7 @@ public static class DbCommandExtension
         CancellationToken ct
     )
     {
-        return ExecuteReaderCore(command, query, ct).ConfigureAwait(false);
+        return command.ExecuteReaderCore(query, ct).ConfigureAwait(false);
     }
 
     private static async ValueTask<DbDataReader> ExecuteReaderCore(
@@ -54,7 +54,7 @@ public static class DbCommandExtension
         CancellationToken ct
     )
     {
-        return GetGuidCore(command, query, ct).ConfigureAwait(false);
+        return command.GetGuidCore(query, ct).ConfigureAwait(false);
     }
 
     public static ConfiguredValueTaskAwaitable<int> ExecuteNonQueryAsync(
