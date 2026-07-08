@@ -12,6 +12,21 @@ public interface IDatabaseFactory<TDb>
 
 public interface IAdoDatabaseFactory : IDatabaseFactory<DbCommand>;
 
+public sealed class ValueAdoDatabaseFactory : IAdoDatabaseFactory
+{
+    public ValueAdoDatabaseFactory(IDatabase<DbCommand> database)
+    {
+        _database = database;
+    }
+
+    public ConfiguredValueTaskAwaitable<IDatabase<DbCommand>> CreateAsync(CancellationToken ct)
+    {
+        return TaskHelper.FromResult(_database);
+    }
+
+    private readonly IDatabase<DbCommand> _database;
+}
+
 public sealed class ValueDatabaseFactory<TDb> : IDatabaseFactory<TDb>
 {
     public ValueDatabaseFactory(IDatabase<TDb> database)
