@@ -50,7 +50,7 @@ public sealed class AdoDatabase : IAdoDatabase
 
     private SemaphoreSlim CreateSemaphoreSlim()
     {
-        return new SemaphoreSlim(1, 1);
+        return new(1, 1);
     }
 
     private async ValueTask<T> ExecuteCore<T>(
