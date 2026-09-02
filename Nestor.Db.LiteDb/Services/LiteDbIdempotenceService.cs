@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Gaia.Helpers;
 using Gaia.Services;
 using Nestor.Db.Models;
 using Nestor.Db.Services;
@@ -7,7 +8,7 @@ namespace Nestor.Db.LiteDb.Services;
 
 public sealed class LiteDbIdempotenceService : IIdempotenceService
 {
-    public LiteDbIdempotenceService(IDatabaseFactory factory, ISerializer serializer)
+    public LiteDbIdempotenceService(IUltraLiteDatabaseFactory factory, ISerializer serializer)
     {
         _factory = factory;
         _serializer = serializer;
@@ -24,7 +25,7 @@ public sealed class LiteDbIdempotenceService : IIdempotenceService
         return AddCore(id, value, ct).ConfigureAwait(false);
     }
 
-    private readonly IDatabaseFactory _factory;
+    private readonly IUltraLiteDatabaseFactory _factory;
     private readonly ISerializer _serializer;
 
     private async ValueTask AddCore(Guid id, object value, CancellationToken ct)
@@ -49,6 +50,8 @@ public sealed class LiteDbIdempotenceService : IIdempotenceService
             {
                 var collection = db.GetIdempotentEntityCollection();
                 collection.Insert(document);
+
+                return TaskHelper.ConfiguredCompletedTask;
             },
             ct
         );
@@ -64,7 +67,7 @@ public sealed class LiteDbIdempotenceService : IIdempotenceService
             {
                 var collection = db.GetIdempotentEntityCollection();
 
-                return collection.FindById(id);
+                return TaskHelper.FromResult(collection.FindById(id));
             },
             ct
         );

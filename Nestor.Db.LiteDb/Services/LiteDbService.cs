@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Gaia.Helpers;
 using Gaia.Services;
 using Nestor.Db.LiteDb.Helpers;
 using Nestor.Db.Models;
@@ -37,7 +38,7 @@ public abstract class LiteDbService<TGetRequest, TPostRequest, TGetResponse, TPo
         return ClearEventsCore(ct).ConfigureAwait(false);
     }
 
-    protected readonly IDatabaseFactory Factory;
+    protected readonly IUltraLiteDatabaseFactory Factory;
 
     protected abstract ConfiguredValueTaskAwaitable ExecuteAsync(
         Guid idempotentId,
@@ -46,10 +47,10 @@ public abstract class LiteDbService<TGetRequest, TPostRequest, TGetResponse, TPo
         CancellationToken ct
     );
 
-    protected LiteDbService(IDatabaseFactory factory, params string[] eventEntityTypes)
+    protected LiteDbService(IUltraLiteDatabaseFactory factory, params string[] eventEntityTypes)
     {
         Factory = factory;
-        _eventEntityTypes = eventEntityTypes.Select(x => new BsonValue(x)).ToArray();
+        _eventEntityTypes = Enumerable.Select(eventEntityTypes, x => new BsonValue(x)).ToArray();
     }
 
     private readonly BsonValue[] _eventEntityTypes;
@@ -57,7 +58,10 @@ public abstract class LiteDbService<TGetRequest, TPostRequest, TGetResponse, TPo
     public async ValueTask ClearEventsCore(CancellationToken ct)
     {
         var database = await Factory.CreateAsync(ct);
-        await database.ExecuteAsync(db => db.DropEventEntityCollection(), ct);
+        await database.ExecuteAsync(
+            db => TaskHelper.FromResult(db.DropEventEntityCollection()),
+            ct
+        );
     }
 
     private async ValueTask<EventEntity[]> GetEventsCore(CancellationToken ct)
@@ -72,12 +76,12 @@ public abstract class LiteDbService<TGetRequest, TPostRequest, TGetResponse, TPo
 
                 if (documents is null)
                 {
-                    return [];
+                    return TaskHelper.FromResult(Array.Empty<EventEntity>());
                 }
 
                 var events = documents.Select(x => x.ToEventEntity()).ToArray();
 
-                return events;
+                return TaskHelper.FromResult(events);
             },
             ct
         );
@@ -128,6 +132,8 @@ public abstract class LiteDbService<TGetRequest, TPostRequest, TGetResponse, TPo
                     @event.Remove("_id");
                     eventCollection.Insert(@event);
                 }
+
+                return TaskHelper.ConfiguredCompletedTask;
             },
             ct
         );

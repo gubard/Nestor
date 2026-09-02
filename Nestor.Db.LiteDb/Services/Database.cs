@@ -1,9 +1,12 @@
 using System.Runtime.CompilerServices;
+using Nestor.Db.Services;
 using UltraLiteDB;
 
 namespace Nestor.Db.LiteDb.Services;
 
-public sealed class Database : IDatabase
+public interface IUltraLiteDatabase : IDatabase<UltraLiteDatabase>;
+
+public sealed class Database : IUltraLiteDatabase
 {
     public Database(UltraLiteDatabase database)
     {
@@ -11,7 +14,7 @@ public sealed class Database : IDatabase
     }
 
     public ConfiguredValueTaskAwaitable ExecuteAsync(
-        Action<UltraLiteDatabase> action,
+        Func<UltraLiteDatabase, ConfiguredValueTaskAwaitable> action,
         CancellationToken ct
     )
     {
@@ -19,7 +22,7 @@ public sealed class Database : IDatabase
     }
 
     public ConfiguredValueTaskAwaitable<T> ExecuteAsync<T>(
-        Func<UltraLiteDatabase, T> action,
+        Func<UltraLiteDatabase, ConfiguredValueTaskAwaitable<T>> action,
         CancellationToken ct
     )
     {
@@ -29,7 +32,10 @@ public sealed class Database : IDatabase
     private readonly UltraLiteDatabase _database;
     private readonly SemaphoreSlim _asyncSemaphore = new(1, 1);
 
-    private async ValueTask ExecuteCore(Action<UltraLiteDatabase> action, CancellationToken ct)
+    private async ValueTask ExecuteCore(
+        Func<UltraLiteDatabase, ConfiguredValueTaskAwaitable> action,
+        CancellationToken ct
+    )
     {
         await _asyncSemaphore.WaitAsync(ct);
 
@@ -44,7 +50,7 @@ public sealed class Database : IDatabase
     }
 
     private async ValueTask<T> ExecuteCore<T>(
-        Func<UltraLiteDatabase, T> action,
+        Func<UltraLiteDatabase, ConfiguredValueTaskAwaitable<T>> action,
         CancellationToken ct
     )
     {
@@ -52,7 +58,7 @@ public sealed class Database : IDatabase
 
         try
         {
-            return action(_database);
+            return await action(_database);
         }
         finally
         {

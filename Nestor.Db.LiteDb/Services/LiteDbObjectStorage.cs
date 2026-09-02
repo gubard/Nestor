@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Gaia.Helpers;
 using Gaia.Services;
 using Nestor.Db.Models;
 using Nestor.Db.Services;
@@ -7,14 +8,14 @@ namespace Nestor.Db.LiteDb.Services;
 
 public sealed class LiteDbObjectStorage : IObjectStorage
 {
-    public LiteDbObjectStorage(IDatabaseFactory factory, ISerializer serializer)
+    public LiteDbObjectStorage(IUltraLiteDatabaseFactory factory, ISerializer serializer)
     {
         _factory = factory;
         _serializer = serializer;
     }
 
     public ConfiguredValueTaskAwaitable<T> LoadAsync<T>(string key, CancellationToken ct)
-        where T : new()
+        where T : IStaticFactory<T>
     {
         return LoadCore<T>(key, ct).ConfigureAwait(false);
     }
@@ -24,11 +25,11 @@ public sealed class LiteDbObjectStorage : IObjectStorage
         return SaveCore(key, obj, ct).ConfigureAwait(false);
     }
 
-    private readonly IDatabaseFactory _factory;
+    private readonly IUltraLiteDatabaseFactory _factory;
     private readonly ISerializer _serializer;
 
     private async ValueTask<T> LoadCore<T>(string key, CancellationToken ct)
-        where T : new()
+        where T : IStaticFactory<T>
     {
         var database = await _factory.CreateAsync(ct);
 
@@ -40,25 +41,25 @@ public sealed class LiteDbObjectStorage : IObjectStorage
 
                 if (document is null)
                 {
-                    return new();
+                    return TaskHelper.FromResult(new ObjectEntity());
                 }
 
                 var obj = document.ToObjectEntity();
 
-                return obj;
+                return TaskHelper.FromResult(obj);
             },
             ct
         );
 
         if (obj.Content.Length == 0)
         {
-            return new();
+            return T.Create();
         }
 
         await using var stream = new MemoryStream(obj.Content);
         stream.Position = 0;
 
-        return await _serializer.DeserializeAsync<T>(stream, ct) ?? new();
+        return await _serializer.DeserializeAsync<T>(stream, ct) ?? T.Create();
     }
 
     private async ValueTask SaveCore(string key, object obj, CancellationToken ct)
@@ -85,10 +86,12 @@ public sealed class LiteDbObjectStorage : IObjectStorage
                 {
                     collection.Insert(entity.ToBsonDocument());
 
-                    return;
+                    return TaskHelper.ConfiguredCompletedTask;
                 }
 
                 collection.Update(entity.ToBsonDocument());
+
+                return TaskHelper.ConfiguredCompletedTask;
             },
             ct
         );
