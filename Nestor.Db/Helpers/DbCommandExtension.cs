@@ -27,7 +27,7 @@ public static class DbCommandExtension
     {
         command.SetSqlQuery(query);
 
-        return await command.ExecuteReaderAsync(ct);
+        return await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
     }
 
     private static async ValueTask<Guid[]> GetGuidCore(
@@ -38,7 +38,7 @@ public static class DbCommandExtension
     {
         var ids = new List<Guid>();
         command.SetSqlQuery(query);
-        await using var reader = await command.ExecuteReaderAsync(ct);
+        await using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
 
         while (await reader.ReadAsync(ct))
         {

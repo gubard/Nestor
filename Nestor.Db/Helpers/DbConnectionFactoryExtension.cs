@@ -146,7 +146,7 @@ public static class DbConnectionFactoryExtension
             command.Parameters.AddRange(query.CreateParameters(command));
             await connection.OpenAsync(ct);
 
-            return await command.ExecuteReaderAsync(ct);
+            return await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
         }
 
         private async ValueTask<bool> IsCanConnectCore(SqlQuery query, CancellationToken ct)
@@ -159,7 +159,7 @@ public static class DbConnectionFactoryExtension
                 command.Parameters.Clear();
                 command.Parameters.AddRange(query.CreateParameters(command));
                 await connection.OpenAsync(ct);
-                await command.ExecuteNonQueryAsync(ct);
+                await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
 
                 return true;
             }
@@ -177,7 +177,7 @@ public static class DbConnectionFactoryExtension
             command.Parameters.Clear();
             command.Parameters.AddRange(query.CreateParameters(command));
             await connection.OpenAsync(ct);
-            var rowCount = await command.ExecuteNonQueryAsync(ct);
+            var rowCount = await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
 
             return rowCount;
         }
@@ -190,7 +190,7 @@ public static class DbConnectionFactoryExtension
             command.Parameters.Clear();
             command.Parameters.AddRange(query.CreateParameters(command));
             await connection.OpenAsync(ct);
-            var result = await command.ExecuteScalarAsync(ct);
+            var result = await command.ExecuteScalarAsync(ct).ConfigureAwait(false);
 
             return Convert.ToInt32(result);
         }
@@ -203,7 +203,7 @@ public static class DbConnectionFactoryExtension
             command.Parameters.Clear();
             command.Parameters.AddRange(query.CreateParameters(command));
             await connection.OpenAsync(ct);
-            var result = await command.ExecuteScalarAsync(ct);
+            var result = await command.ExecuteScalarAsync(ct).ConfigureAwait(false);
 
             return Convert.ToInt64(result);
         }
