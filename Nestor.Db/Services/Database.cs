@@ -60,12 +60,16 @@ public sealed class AdoDatabase : IAdoDatabase
     {
         await using var connection = _factory.Create();
         var dbLock = _dbLocks.GetOrAdd(connection.ConnectionString, _ => CreateSemaphoreSlim());
-        await dbLock.WaitAsync(ct);
+        await dbLock.WaitAsync(ct).ConfigureAwait(false);
 
         try
         {
-            await connection.OpenAsync(ct);
-            await using var transaction = await connection.BeginTransactionAsync(ct);
+            await connection.OpenAsync(ct).ConfigureAwait(false);
+
+            await using var transaction = await connection
+                .BeginTransactionAsync(ct)
+                .ConfigureAwait(false);
+
             T result;
 
             try
@@ -74,12 +78,12 @@ public sealed class AdoDatabase : IAdoDatabase
             }
             catch
             {
-                await transaction.RollbackAsync(ct);
+                await transaction.RollbackAsync(ct).ConfigureAwait(false);
 
                 throw;
             }
 
-            await transaction.CommitAsync(ct);
+            await transaction.CommitAsync(ct).ConfigureAwait(false);
 
             return result;
         }
@@ -96,12 +100,15 @@ public sealed class AdoDatabase : IAdoDatabase
     {
         await using var connection = _factory.Create();
         var dbLock = _dbLocks.GetOrAdd(connection.ConnectionString, _ => CreateSemaphoreSlim());
-        await dbLock.WaitAsync(ct);
+        await dbLock.WaitAsync(ct).ConfigureAwait(false);
 
         try
         {
-            await connection.OpenAsync(ct);
-            await using var transaction = await connection.BeginTransactionAsync(ct);
+            await connection.OpenAsync(ct).ConfigureAwait(false);
+
+            await using var transaction = await connection
+                .BeginTransactionAsync(ct)
+                .ConfigureAwait(false);
 
             try
             {
@@ -109,12 +116,12 @@ public sealed class AdoDatabase : IAdoDatabase
             }
             catch
             {
-                await transaction.RollbackAsync(ct);
+                await transaction.RollbackAsync(ct).ConfigureAwait(false);
 
                 throw;
             }
 
-            await transaction.CommitAsync(ct);
+            await transaction.CommitAsync(ct).ConfigureAwait(false);
         }
         finally
         {
