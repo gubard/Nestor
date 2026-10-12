@@ -14,4 +14,18 @@ public static partial class NestorLog
         Message = "End POST request. Total time {Time}"
     )]
     public static partial void EndPostRequest(this ILogger logger, TimeSpan time);
+
+    [LoggerMessage(
+        EventId = 3,
+        Level = LogLevel.Error,
+        Message = "Error executing database command with connection string {ConnectionString}"
+    )]
+    public static partial void ConnectionError(this ILogger logger, string connectionString);
+
+    [LoggerMessage(
+        EventId = 4,
+        Level = LogLevel.Error,
+        Message = "Error executing database command with {CommandText}"
+    )]
+    public static partial void CommandError(this ILogger logger, string commandText);
 }

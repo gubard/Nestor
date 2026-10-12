@@ -137,7 +137,10 @@ public static class DbConnectionFactoryExtension
             return factory.ExecuteNonQueryCore(query, ct).ConfigureAwait(false);
         }
 
-        public async ValueTask<DbDataReader> ExecuteReaderCore(SqlQuery query, CancellationToken ct)
+        private async ValueTask<DbDataReader> ExecuteReaderCore(
+            SqlQuery query,
+            CancellationToken ct
+        )
         {
             await using var connection = factory.Create();
             await using var command = connection.CreateCommand();

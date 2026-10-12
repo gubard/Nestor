@@ -4,6 +4,8 @@ using System.Data.Common;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Nestor.Db.Helpers;
 
 namespace Nestor.Db.Services;
 
@@ -24,9 +26,10 @@ public interface IAdoDatabase : IDatabase<DbCommand>;
 
 public sealed class AdoDatabase : IAdoDatabase
 {
-    public AdoDatabase(IDbConnectionFactory factory)
+    public AdoDatabase(IDbConnectionFactory factory, ILogger logger)
     {
         _factory = factory;
+        _logger = logger;
     }
 
     public ConfiguredValueTaskAwaitable ExecuteAsync(
@@ -47,6 +50,7 @@ public sealed class AdoDatabase : IAdoDatabase
 
     private static ConcurrentDictionary<string, SemaphoreSlim> _dbLocks = [];
     private readonly IDbConnectionFactory _factory;
+    private readonly ILogger _logger;
 
     private SemaphoreSlim CreateSemaphoreSlim()
     {
@@ -70,14 +74,17 @@ public sealed class AdoDatabase : IAdoDatabase
                 .BeginTransactionAsync(ct)
                 .ConfigureAwait(false);
 
+            await using var command = connection.CreateCommand();
+
             T result;
 
             try
             {
-                result = await action.Invoke(connection.CreateCommand());
+                result = await action.Invoke(command);
             }
             catch
             {
+                _logger.CommandError(command.CommandText);
                 await transaction.RollbackAsync(ct).ConfigureAwait(false);
 
                 throw;
@@ -86,6 +93,12 @@ public sealed class AdoDatabase : IAdoDatabase
             await transaction.CommitAsync(ct).ConfigureAwait(false);
 
             return result;
+        }
+        catch
+        {
+            _logger.ConnectionError(connection.ConnectionString);
+
+            throw;
         }
         finally
         {
@@ -110,18 +123,27 @@ public sealed class AdoDatabase : IAdoDatabase
                 .BeginTransactionAsync(ct)
                 .ConfigureAwait(false);
 
+            await using var command = connection.CreateCommand();
+
             try
             {
-                await action.Invoke(connection.CreateCommand());
+                await action.Invoke(command);
             }
             catch
             {
+                _logger.CommandError(command.CommandText);
                 await transaction.RollbackAsync(ct).ConfigureAwait(false);
 
                 throw;
             }
 
             await transaction.CommitAsync(ct).ConfigureAwait(false);
+        }
+        catch
+        {
+            _logger.ConnectionError(connection.ConnectionString);
+
+            throw;
         }
         finally
         {
