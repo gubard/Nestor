@@ -1,7 +1,9 @@
 using System.Data.Common;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Gaia.Helpers;
+using Gaia.Services;
 
 namespace Nestor.Db.Services;
 
@@ -11,6 +13,8 @@ public interface IDatabaseFactory<TDb>
 }
 
 public interface IAdoDatabaseFactory : IDatabaseFactory<DbCommand>;
+
+public interface IFileAdoDatabaseFactory : IFactory<FileInfo, IAdoDatabase>;
 
 public sealed class ValueAdoDatabaseFactory : IAdoDatabaseFactory
 {
