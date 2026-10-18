@@ -91,7 +91,7 @@ public sealed class AdoObjectStorage : IObjectStorage
 
                 using var stream = new MemoryStream(entity.Content);
                 stream.Position = 0;
-                var value = await SafeDeserializeAsync<T>(stream, ct);
+                var value = await DeserializeOrNullAsync<T>(stream, ct);
 
                 return value ?? T.Create();
             },
@@ -99,7 +99,7 @@ public sealed class AdoObjectStorage : IObjectStorage
         );
     }
 
-    private async ValueTask<T?> SafeDeserializeAsync<T>(Stream stream, CancellationToken ct)
+    private async ValueTask<T?> DeserializeOrNullAsync<T>(Stream stream, CancellationToken ct)
     {
         try
         {
