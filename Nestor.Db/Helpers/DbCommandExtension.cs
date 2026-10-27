@@ -40,7 +40,7 @@ public static class DbCommandExtension
         command.SetSqlQuery(query);
         await using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
 
-        while (await reader.ReadAsync(ct))
+        while (await reader.ReadAsync(ct).ConfigureAwait(false))
         {
             ids.Add(reader.GetGuid(0));
         }

@@ -238,12 +238,12 @@ public readonly struct DbSession : IDisposable, IAsyncDisposable
 
     private async ValueTask RollbackCore(CancellationToken ct)
     {
-        await _transaction.RollbackAsync(ct);
+        await _transaction.RollbackAsync(ct).ConfigureAwait(false);
     }
 
     private async ValueTask CommitCore(CancellationToken ct)
     {
-        await _transaction.CommitAsync(ct);
+        await _transaction.CommitAsync(ct).ConfigureAwait(false);
     }
 
     private static async ValueTask<DbSession> CreateCore(
@@ -253,8 +253,11 @@ public readonly struct DbSession : IDisposable, IAsyncDisposable
     )
     {
         var command = connection.CreateCommand();
-        await connection.OpenAsync(ct);
-        command.Transaction = await connection.BeginTransactionAsync(isolationLevel, ct);
+        await connection.OpenAsync(ct).ConfigureAwait(false);
+
+        command.Transaction = await connection
+            .BeginTransactionAsync(isolationLevel, ct)
+            .ConfigureAwait(false);
 
         return new(connection, command, command.Transaction);
     }

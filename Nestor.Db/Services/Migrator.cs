@@ -94,7 +94,7 @@ public sealed class Migrator : IMigrator
 
         var ids = new List<int>();
 
-        while (await reader.ReadAsync(ct))
+        while (await reader.ReadAsync(ct).ConfigureAwait(false))
         {
             ids.Add(reader.GetFieldValue<int>(0));
         }

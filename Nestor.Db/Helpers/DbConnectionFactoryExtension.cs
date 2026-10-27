@@ -147,7 +147,7 @@ public static class DbConnectionFactoryExtension
             command.CommandText = query.Sql;
             command.Parameters.Clear();
             command.Parameters.AddRange(query.CreateParameters(command));
-            await connection.OpenAsync(ct);
+            await connection.OpenAsync(ct).ConfigureAwait(false);
 
             return await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
         }
@@ -161,7 +161,7 @@ public static class DbConnectionFactoryExtension
                 command.CommandText = query.Sql;
                 command.Parameters.Clear();
                 command.Parameters.AddRange(query.CreateParameters(command));
-                await connection.OpenAsync(ct);
+                await connection.OpenAsync(ct).ConfigureAwait(false);
                 await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
 
                 return true;
@@ -179,7 +179,7 @@ public static class DbConnectionFactoryExtension
             command.CommandText = query.Sql;
             command.Parameters.Clear();
             command.Parameters.AddRange(query.CreateParameters(command));
-            await connection.OpenAsync(ct);
+            await connection.OpenAsync(ct).ConfigureAwait(false);
             var rowCount = await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
 
             return rowCount;
@@ -192,7 +192,7 @@ public static class DbConnectionFactoryExtension
             command.CommandText = query.Sql;
             command.Parameters.Clear();
             command.Parameters.AddRange(query.CreateParameters(command));
-            await connection.OpenAsync(ct);
+            await connection.OpenAsync(ct).ConfigureAwait(false);
             var result = await command.ExecuteScalarAsync(ct).ConfigureAwait(false);
 
             return Convert.ToInt32(result);
@@ -205,7 +205,7 @@ public static class DbConnectionFactoryExtension
             command.CommandText = query.Sql;
             command.Parameters.Clear();
             command.Parameters.AddRange(query.CreateParameters(command));
-            await connection.OpenAsync(ct);
+            await connection.OpenAsync(ct).ConfigureAwait(false);
             var result = await command.ExecuteScalarAsync(ct).ConfigureAwait(false);
 
             return Convert.ToInt64(result);

@@ -40,7 +40,7 @@ public static class DbSessionExtension
         var ids = new List<Guid>();
         await using var reader = await session.ExecuteReaderAsync(query, ct);
 
-        while (await reader.ReadAsync(ct))
+        while (await reader.ReadAsync(ct).ConfigureAwait(false))
         {
             ids.Add(reader.GetGuid(0));
         }
