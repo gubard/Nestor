@@ -89,7 +89,7 @@ public sealed class Migrator : IMigrator
 
         if (!reader.HasRows)
         {
-            return _migrations.Select(x => x.Key).Order().ToArray();
+            return [.. _migrations.Select(x => x.Key).Order()];
         }
 
         var ids = new List<int>();
@@ -99,7 +99,7 @@ public sealed class Migrator : IMigrator
             ids.Add(reader.GetFieldValue<int>(0));
         }
 
-        return _migrations.Select(x => x.Key).Except(ids).Order().ToArray();
+        return [.. _migrations.Select(x => x.Key).Except(ids).Order()];
     }
 
     private int[] GetUnappliedMigrations(DbSession session)
@@ -108,7 +108,7 @@ public sealed class Migrator : IMigrator
 
         if (!reader.HasRows)
         {
-            return _migrations.Select(x => x.Key).Order().ToArray();
+            return [.. _migrations.Select(x => x.Key).Order()];
         }
 
         var ids = new List<int>();
@@ -118,6 +118,6 @@ public sealed class Migrator : IMigrator
             ids.Add(reader.GetFieldValue<int>(0));
         }
 
-        return _migrations.Select(x => x.Key).Except(ids).Order().ToArray();
+        return [.. _migrations.Select(x => x.Key).Except(ids).Order()];
     }
 }

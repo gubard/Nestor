@@ -102,7 +102,7 @@ public abstract class AdoDbService<TGetRequest, TPostRequest, TGetResponse, TPos
     {
         Factory = factory;
         _logger = logger;
-        _eventEntityTypes = eventEntityTypes.ToArray();
+        _eventEntityTypes = [.. eventEntityTypes];
     }
 
     private readonly string[] _eventEntityTypes;

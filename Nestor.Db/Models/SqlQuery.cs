@@ -33,6 +33,6 @@ public readonly struct SqlQuery
             return Array.Empty<DbParameter>();
         }
 
-        return Parameters.ToArray().Select(p => p.CreateParameter(command)).ToArray();
+        return [.. Parameters.ToArray().Select(p => p.CreateParameter(command))];
     }
 }

@@ -80,7 +80,7 @@ public sealed class AdoSqliteGenerator : IIncrementalGenerator
                             stringBuilder,
                             type,
                             isAutoIncrementId
-                                ? properties.Where(x => x.Name != idName).ToArray()
+                                ? [.. properties.Where(x => x.Name != idName)]
                                 : properties
                         );
 

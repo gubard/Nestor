@@ -45,6 +45,6 @@ public static class DbSessionExtension
             ids.Add(reader.GetGuid(0));
         }
 
-        return ids.ToArray();
+        return [.. ids];
     }
 }

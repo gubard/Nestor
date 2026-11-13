@@ -45,7 +45,7 @@ public static class DbCommandExtension
             ids.Add(reader.GetGuid(0));
         }
 
-        return ids.ToArray();
+        return [.. ids];
     }
 
     public static ConfiguredValueTaskAwaitable<Guid[]> GetGuidAsync(
