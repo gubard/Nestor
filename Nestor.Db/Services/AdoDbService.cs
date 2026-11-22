@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Gaia.Helpers;
+using Gaia.Models;
 using Gaia.Services;
 using Microsoft.Extensions.Logging;
 using Nestor.Db.Helpers;
@@ -13,8 +14,8 @@ namespace Nestor.Db.Services;
 
 public interface IDbService<in TGetRequest, in TPostRequest, TGetResponse, TPostResponse>
     : IService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
-    where TGetResponse : IValidationErrors, new()
-    where TPostResponse : IValidationErrors, new()
+    where TGetResponse : new()
+    where TPostResponse : new()
 {
     ConfiguredValueTaskAwaitable<EventEntity[]> GetEventsAsync(CancellationToken ct);
     ConfiguredValueTaskAwaitable ClearEventsAsync(CancellationToken ct);
@@ -22,25 +23,25 @@ public interface IDbService<in TGetRequest, in TPostRequest, TGetResponse, TPost
 
 public abstract class EmptyDbService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
     : IDbService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
-    where TGetResponse : IValidationErrors, new()
-    where TPostResponse : IValidationErrors, IPostResponse, new()
+    where TGetResponse : new()
+    where TPostResponse : IPostResponse, new()
     where TPostRequest : IPostRequest
 {
-    public ConfiguredValueTaskAwaitable<TGetResponse> GetAsync(
+    public ConfiguredValueTaskAwaitable<Result<TGetResponse>> GetAsync(
         TGetRequest request,
         CancellationToken ct
     )
     {
-        return TaskHelper.FromResult(new TGetResponse());
+        return TaskHelper.FromResult(new Result<TGetResponse>(new TGetResponse()));
     }
 
-    public ConfiguredValueTaskAwaitable<TPostResponse> PostAsync(
+    public ConfiguredValueTaskAwaitable<Result<TPostResponse>> PostAsync(
         Guid idempotentId,
         TPostRequest request,
         CancellationToken ct
     )
     {
-        return TaskHelper.FromResult(new TPostResponse());
+        return TaskHelper.FromResult(new Result<TPostResponse>(new TPostResponse()));
     }
 
     public ConfiguredValueTaskAwaitable<EventEntity[]> GetEventsAsync(CancellationToken ct)
@@ -56,16 +57,16 @@ public abstract class EmptyDbService<TGetRequest, TPostRequest, TGetResponse, TP
 
 public abstract class AdoDbService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
     : IDbService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
-    where TGetResponse : IValidationErrors, new()
-    where TPostResponse : IValidationErrors, IPostResponse, new()
+    where TGetResponse : new()
+    where TPostResponse : IPostResponse, new()
     where TPostRequest : IPostRequest
 {
-    public abstract ConfiguredValueTaskAwaitable<TGetResponse> GetAsync(
+    public abstract ConfiguredValueTaskAwaitable<Result<TGetResponse>> GetAsync(
         TGetRequest request,
         CancellationToken ct
     );
 
-    public ConfiguredValueTaskAwaitable<TPostResponse> PostAsync(
+    public ConfiguredValueTaskAwaitable<Result<TPostResponse>> PostAsync(
         Guid idempotentId,
         TPostRequest request,
         CancellationToken ct
@@ -138,7 +139,7 @@ public abstract class AdoDbService<TGetRequest, TPostRequest, TGetResponse, TPos
         await database.ExecuteAsync(c => c.ExecuteNonQueryAsync(EventsExt.DeleteQuery, ct), ct);
     }
 
-    private async ValueTask<TPostResponse> PostCore(
+    private async ValueTask<Result<TPostResponse>> PostCore(
         Guid idempotentId,
         TPostRequest request,
         CancellationToken ct

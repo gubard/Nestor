@@ -2,7 +2,7 @@
 
 namespace Nestor.Db.Models;
 
-public interface IResponse : IValidationErrors;
+public interface IResponse;
 
 public interface IPostResponse : IResponse
 {
