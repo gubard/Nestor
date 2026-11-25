@@ -1,6 +1,4 @@
-﻿using Gaia.Services;
-
-namespace Nestor.Db.Models;
+﻿namespace Nestor.Db.Models;
 
 public interface IResponse;
 

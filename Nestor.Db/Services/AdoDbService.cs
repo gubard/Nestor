@@ -14,8 +14,8 @@ namespace Nestor.Db.Services;
 
 public interface IDbService<in TGetRequest, in TPostRequest, TGetResponse, TPostResponse>
     : IService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
-    where TGetResponse : new()
-    where TPostResponse : new()
+    where TGetResponse : notnull, new()
+    where TPostResponse : notnull, new()
 {
     ConfiguredValueTaskAwaitable<EventEntity[]> GetEventsAsync(CancellationToken ct);
     ConfiguredValueTaskAwaitable ClearEventsAsync(CancellationToken ct);
@@ -23,7 +23,7 @@ public interface IDbService<in TGetRequest, in TPostRequest, TGetResponse, TPost
 
 public abstract class EmptyDbService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
     : IDbService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
-    where TGetResponse : new()
+    where TGetResponse : notnull, new()
     where TPostResponse : IPostResponse, new()
     where TPostRequest : IPostRequest
 {
@@ -57,7 +57,7 @@ public abstract class EmptyDbService<TGetRequest, TPostRequest, TGetResponse, TP
 
 public abstract class AdoDbService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
     : IDbService<TGetRequest, TPostRequest, TGetResponse, TPostResponse>
-    where TGetResponse : new()
+    where TGetResponse : notnull, new()
     where TPostResponse : IPostResponse, new()
     where TPostRequest : IPostRequest
 {
@@ -86,7 +86,7 @@ public abstract class AdoDbService<TGetRequest, TPostRequest, TGetResponse, TPos
     }
 
     protected readonly IAdoDatabaseFactory Factory;
-    protected readonly ILogger _logger;
+    protected readonly ILogger Logger;
 
     protected abstract ConfiguredValueTaskAwaitable ExecuteAsync(
         Guid idempotentId,
@@ -102,7 +102,7 @@ public abstract class AdoDbService<TGetRequest, TPostRequest, TGetResponse, TPos
     )
     {
         Factory = factory;
-        _logger = logger;
+        Logger = logger;
         _eventEntityTypes = [.. eventEntityTypes];
     }
 
@@ -146,13 +146,13 @@ public abstract class AdoDbService<TGetRequest, TPostRequest, TGetResponse, TPos
     )
     {
         var ticks = Environment.TickCount64;
-        _logger.StartPostRequest();
+        Logger.StartPostRequest();
         var response = new TPostResponse();
 
         if (request.Events.Length == 0)
         {
             await ExecuteAsync(idempotentId, response, request, ct);
-            _logger.EndPostRequest(TimeSpan.FromTicks(Environment.TickCount64 - ticks));
+            Logger.EndPostRequest(TimeSpan.FromTicks(Environment.TickCount64 - ticks));
 
             return response;
         }
@@ -187,7 +187,7 @@ public abstract class AdoDbService<TGetRequest, TPostRequest, TGetResponse, TPos
 
         response.IsEventSaved = true;
         await ExecuteAsync(idempotentId, response, request, ct);
-        _logger.EndPostRequest(TimeSpan.FromTicks(Environment.TickCount64 - ticks));
+        Logger.EndPostRequest(TimeSpan.FromTicks(Environment.TickCount64 - ticks));
 
         return response;
     }
